@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Carretto UCI</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icona.png">
+    
+    <style>
+        :root { 
+            --bg: #000000; 
+            --card: #1C1C1E; 
+            --accent: #0A84FF; 
+            --red: #FF453A; 
+            --orange: #FF9F0A; 
+            --green: #32D74B; 
+            --text-gray: #8E8E93;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; 
+            background: var(--bg); color: white; margin: 0; 
+            padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+        }
+
+        /* Correzione tastiera: blocca scorrimento prodotti sotto la cassa */
+        body.modal-open { overflow: hidden; position: fixed; width: 100%; }
+
+        .header { 
+            display: flex; align-items: center; justify-content: space-between; 
+            padding: 40px 20px 20px; position: sticky; top: 0; 
+            background: var(--bg); z-index: 100;
+        }
+        .total-box { flex: 1; }
+        .total-label { font-size: 11px; font-weight: 700; color: var(--text-gray); text-transform: uppercase; margin-bottom: 4px; }
+        .total-amount { font-size: 44px; font-weight: 800; white-space: nowrap; letter-spacing: -1px; }
+        .header-btns { display: flex; gap: 12px; }
+        .btn-circle { 
+            width: 48px; height: 48px; border-radius: 50%; border: none; 
+            color: white; display: flex; align-items: center; justify-content: center; 
+            font-size: 20px; cursor: pointer;
+        }
+
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 0 20px 40px; }
+        .product-btn { 
+            background: var(--card); border: none; border-radius: 16px; padding: 18px 10px;
+            color: white; text-align: center; display: flex; flex-direction: column;
+            justify-content: center; min-height: 100px;
+        }
+        .product-btn:active { background: #2C2C2E; }
+        .p-name { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+        .p-price { font-size: 14px; color: var(--accent); font-weight: 500; }
+
+        .sheet { 
+            position: fixed; top: 0; left: 0; width: 100%; 
+            height: 100dvh; /* Copre tutto lo spazio tastiera inclusa */
+            background: var(--bg); z-index: 1000; display: none; flex-direction: column; 
+        }
+        
+        .sheet-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 20px; background: var(--bg); z-index: 10;
+        }
+        .sheet-title { font-size: 32px; font-weight: 800; }
+        .btn-close { 
+            background: #2C2C2E; color: var(--text-gray); border: none; 
+            border-radius: 50%; width: 32px; height: 32px; 
+            font-size: 16px; font-weight: bold; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .sheet-content { padding: 0 20px 40px; overflow-y: auto; flex: 1; background: var(--bg); }
+        .section-header { font-size: 13px; color: var(--text-gray); text-transform: uppercase; margin: 25px 0 8px 15px; font-weight: 600; }
+        .inset-group { background: var(--card); border-radius: 16px; overflow: hidden; margin-bottom: 20px; }
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 1px solid #2C2C2E; font-size: 17px; }
+        .list-item:last-child { border-bottom: none; }
+        
+        .pay-btn { width: 100%; padding: 16px; border-radius: 25px; border: none; font-size: 17px; font-weight: 700; margin: 10px 0; cursor: pointer; text-align: center; }
+        .btn-blue { background: var(--accent); color: white; }
+        .btn-green { background: var(--green); color: white; }
+        .btn-red { background: var(--red); color: white; }
+        
+        .quick-cash { display: flex; gap: 10px; margin: 20px 0; justify-content: center; }
+        .taglio-btn { background: var(--card); border: none; color: var(--accent); padding: 12px 20px; border-radius: 20px; font-size: 17px; font-weight: 500; flex: 1; text-align: center; }
+
+        .input-group { background: var(--card); border-radius: 16px; display: flex; align-items: center; padding: 6px 16px; margin-bottom: 20px; }
+        input { background: transparent; border: none; color: white; padding: 12px 0; font-size: 22px; width: 100%; outline: none; }
+        .clear-icon { color: var(--text-gray); font-size: 20px; padding: 5px; cursor: pointer; }
+
+        .resto-area { background: rgba(255, 69, 58, 0.15); padding: 20px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .resto-label { color: var(--red); font-size: 17px; font-weight: 700; }
+        .resto-value { color: var(--red); font-size: 22px; font-weight: 700; }
+
+        /* Elemento invisibile per il trucco della vibrazione iOS 18 */
+        #haptic-trigger { position: absolute; opacity: 0; pointer-events: none; visibility: hidden; }
+    </style>
+</head>
+<body>
+
+    <div id="haptic-trigger">
+        <input type="checkbox" id="haptic-switch" switch>
+        <label for="haptic-switch" id="haptic-label"></label>
+    </div>
+
+    <div class="header">
+        <div class="total-box">
+            <div class="total-label">Totale Carrello</div>
+            <div id="main-total" class="total-amount">€ 0,00</div>
+        </div>
+        <div class="header-btns">
+            <button class="btn-circle" style="background: var(--red)" onclick="triggerHaptic(); clearCart()">🗑</button>
+            <button class="btn-circle" style="background: var(--orange)" onclick="triggerHaptic(); toggleSheet('report-sheet', true)">📊</button>
+            <button class="btn-circle" style="background: #333" id="pay-btn-icon" onclick="triggerHaptic(); toggleSheet('pay-sheet', true)" disabled>💳</button>
+        </div>
+    </div>
+
+    <div class="grid" id="product-grid"></div>
+
+    <div id="pay-sheet" class="sheet">
+        <div class="sheet-header">
+            <span class="sheet-title">Cassa</span>
+            <button class="btn-close" onclick="triggerHaptic(); toggleSheet('pay-sheet', false)">✕</button>
+        </div>
+        <div class="sheet-content">
+            <div class="section-header">Riepilogo Ordine</div>
+            <div class="inset-group" id="order-summary"></div>
+            <div class="section-header">Pagamento con Carta</div>
+            <button class="pay-btn btn-blue" onclick="triggerHaptic(); confirmPayment('carta')">PAGATO CON CARTA</button>
+            <div class="section-header">Pagamento in Contanti</div>
+            <div class="quick-cash">
+                <button class="taglio-btn" onclick="triggerHaptic(); quickCash(2)">€2</button>
+                <button class="taglio-btn" onclick="triggerHaptic(); quickCash(5)">€5</button>
+                <button class="taglio-btn" onclick="triggerHaptic(); quickCash(10)">€10</button>
+                <button class="taglio-btn" onclick="triggerHaptic(); quickCash(20)">€20</button>
+                <button class="taglio-btn" onclick="triggerHaptic(); quickCash(50)">€50</button>
+            </div>
+            <div class="input-group">
+                <input type="text" inputmode="decimal" id="cash-received" placeholder="Importo ricevuto" oninput="checkCash()">
+                <span class="clear-icon" onclick="triggerHaptic(); clearInput()">✕</span>
+            </div>
+            <div id="resto-container" style="display: none;">
+                <div class="resto-area"><span class="resto-label">RESTO:</span><span id="resto-value" class="resto-value">€ 0,00</span></div>
+                <button class="pay-btn btn-green" onclick="triggerHaptic(); confirmPayment('contanti')">CONFERMA E CHIUDI</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="report-sheet" class="sheet">
+        <div class="sheet-header">
+            <span class="sheet-title">Report</span>
+            <button class="btn-close" onclick="triggerHaptic(); toggleSheet('report-sheet', false)">✕</button>
+        </div>
+        <div class="sheet-content">
+            <div class="section-header">Incassi</div>
+            <div class="inset-group">
+                <div class="list-item"><span>Carta</span><span id="rep-carta">€ 0,00</span></div>
+                <div class="list-item"><span>Contanti</span><span id="rep-contanti">€ 0,00</span></div>
+                <div class="list-item" style="font-weight: 600;"><span>TOTALE</span><span id="rep-totale" style="color: var(--green); font-size: 20px;">€ 0,00</span></div>
+            </div>
+            <div class="section-header">Prodotti Venduti</div>
+            <div class="inset-group" id="report-products"></div>
+            <button class="pay-btn btn-red" onclick="triggerHaptic(); resetReport()">AZZERA REPORT GIORNALIERO</button>
+        </div>
+    </div>
+
+    <script>
+        const prodotti = [
+            {nome:"Pop Corn Salati", prezzo:5.60}, {nome:"Pop Corn Dolci", prezzo:6.60},
+            {nome:"Coca/Fanta/Tè (PET)", prezzo:4.00}, {nome:"Acqua Nat 1L", prezzo:2.80},
+            {nome:"Acqua Friz 0,7L", prezzo:2.60}, {nome:"M&M'S (Arachidi / Cioccolato / Mini)", prezzo:4.80},
+            {nome:"M&M'S Caramello Salato", prezzo:4.20}, {nome:"Candy Cup", prezzo:8.00},
+            {nome:"Chupa Chups", prezzo:1.20}, {nome:"Pop Corn Cioccolato", prezzo:3.90},
+            {nome:"Patatine Lays", prezzo:3.90}, {nome:"Nastro Azzurro", prezzo:4.00},
+            {nome:"Mikado", prezzo:3.50}, {nome:"Skittles", prezzo:4.00},
+            {nome:"Salamini Beretta", prezzo:3.50}, {nome:"Barretta Chupa", prezzo:2.00},
+            {nome:"Maltisers", prezzo:4.80}, {nome:"Monster", prezzo:3.40}
+        ];
+
+        let carrello = [];
+        let stats = JSON.parse(localStorage.getItem('uci_v8_stats')) || { carta: 0, contanti: 0, vendite: {} };
+
+        // --- FIX VIBRAZIONE PER iOS 18+ ---
+        function triggerHaptic() {
+            // Per Android e browser che supportano lo standard
+            if (navigator.vibrate) {
+                navigator.vibrate(15);
+            }
+            // Per iOS 18+: Simula il click sulla label dell'input 'switch'
+            const hapticLabel = document.getElementById('haptic-label');
+            if (hapticLabel) {
+                hapticLabel.click();
+            }
+        }
+
+        const grid = document.getElementById('product-grid');
+        prodotti.forEach(p => {
+            const btn = document.createElement('button');
+            btn.className = 'product-btn';
+            btn.innerHTML = `<span class="p-name">${p.nome}</span><span class="p-price">€ ${p.prezzo.toFixed(2).replace('.',',')}</span>`;
+            btn.onclick = () => { triggerHaptic(); carrello.push(p); updateUI(); };
+            grid.appendChild(btn);
+        });
+
+        function updateUI() {
+            const totale = carrello.reduce((acc, p) => acc + p.prezzo, 0);
+            document.getElementById('main-total').innerText = `€ ${totale.toFixed(2).replace('.',',')}`;
+            const payBtn = document.getElementById('pay-btn-icon');
+            payBtn.disabled = carrello.length === 0;
+            payBtn.style.background = carrello.length > 0 ? 'var(--green)' : '#333';
+        }
+
+        function clearCart() { carrello = []; updateUI(); }
+
+        function toggleSheet(id, show) {
+            const sheet = document.getElementById(id);
+            sheet.style.display = show ? 'flex' : 'none';
+            if(show) {
+                document.body.classList.add('modal-open');
+                if(id === 'pay-sheet') renderPay();
+                if(id === 'report-sheet') renderReport();
+            } else {
+                document.body.classList.remove('modal-open');
+            }
+        }
+
+        function renderPay() {
+            const container = document.getElementById('order-summary');
+            const totale = carrello.reduce((acc, p) => acc + p.prezzo, 0);
+            let html = carrello.map(p => `<div class="list-item"><span>${p.nome}</span><span>€ ${p.prezzo.toFixed(2).replace('.',',')}</span></div>`).join('');
+            html += `<div class="list-item" style="font-weight:600;"><span>DA PAGARE</span><span style="color:var(--accent);">€ ${totale.toFixed(2).replace('.',',')}</span></div>`;
+            container.innerHTML = html;
+            document.getElementById('resto-container').style.display = 'none';
+            document.getElementById('cash-received').value = '';
+        }
+
+        function quickCash(val) {
+            document.getElementById('cash-received').value = val.toFixed(2).replace('.', ',');
+            checkCash();
+        }
+
+        function checkCash() {
+            const totale = carrello.reduce((acc, p) => acc + p.prezzo, 0);
+            const ricevuto = parseFloat(document.getElementById('cash-received').value.replace(',','.')) || 0;
+            if(ricevuto >= totale && totale > 0) {
+                document.getElementById('resto-value').innerText = `€ ${(ricevuto - totale).toFixed(2).replace('.',',')}`;
+                document.getElementById('resto-container').style.display = 'block';
+            } else { document.getElementById('resto-container').style.display = 'none'; }
+        }
+
+        function clearInput() { document.getElementById('cash-received').value = ''; checkCash(); }
+
+        function confirmPayment(m) {
+            const totale = carrello.reduce((acc, p) => acc + p.prezzo, 0);
+            if(m === 'carta') stats.carta += totale; else stats.contanti += totale;
+            carrello.forEach(p => { stats.vendite[p.nome] = (stats.vendite[p.nome] || 0) + 1; });
+            localStorage.setItem('uci_v8_stats', JSON.stringify(stats));
+            clearCart(); toggleSheet('pay-sheet', false);
+        }
+
+        function renderReport() {
+            document.getElementById('rep-carta').innerText = `€ ${stats.carta.toFixed(2).replace('.',',')}`;
+            document.getElementById('rep-contanti').innerText = `€ ${stats.contanti.toFixed(2).replace('.',',')}`;
+            document.getElementById('rep-totale').innerText = `€ ${(stats.carta + stats.contanti).toFixed(2).replace('.',',')}`;
+            const prodContainer = document.getElementById('report-products');
+            let vHtml = Object.entries(stats.vendite).sort().map(([n, q]) => `<div class="list-item"><span>${n}</span><span>${q}</span></div>`).join('');
+            prodContainer.innerHTML = vHtml || '<div class="list-item" style="color:gray; font-style:italic;">Nessuna vendita</div>';
+        }
+
+        function resetReport() {
+            if(confirm("Sei sicuro di voler AZZERARE il report giornaliero?")) {
+                triggerHaptic();
+                stats = { carta: 0, contanti: 0, vendite: {} };
+                localStorage.setItem('uci_v8_stats', JSON.stringify(stats));
+                renderReport();
+            }
+        }
+    </script>
+</body>
+</html>
