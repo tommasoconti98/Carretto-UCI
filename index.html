@@ -6,7 +6,7 @@
     <title>Carretto UCI</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="icona.png">
+    <link rel="apple-touch-icon" href="icon.png">
     
     <style>
         :root { 
@@ -26,9 +26,10 @@
             padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
         }
 
-        /* Correzione tastiera: blocca scorrimento prodotti sotto la cassa */
+																			 
         body.modal-open { overflow: hidden; position: fixed; width: 100%; }
 
+        /* --- HEADER PRINCIPALE --- */
         .header { 
             display: flex; align-items: center; justify-content: space-between; 
             padding: 40px 20px 20px; position: sticky; top: 0; 
@@ -44,6 +45,7 @@
             font-size: 20px; cursor: pointer;
         }
 
+        /* --- GRIGLIA PRODOTTI --- */
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 0 20px 40px; }
         .product-btn { 
             background: var(--card); border: none; border-radius: 16px; padding: 18px 10px;
@@ -54,9 +56,10 @@
         .p-name { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
         .p-price { font-size: 14px; color: var(--accent); font-weight: 500; }
 
+        /* --- PAGINA PAGAMENTI --- */
         .sheet { 
             position: fixed; top: 0; left: 0; width: 100%; 
-            height: 100dvh; /* Copre tutto lo spazio tastiera inclusa */
+            height: 100dvh; 
             background: var(--bg); z-index: 1000; display: none; flex-direction: column; 
         }
         
@@ -77,24 +80,41 @@
         .inset-group { background: var(--card); border-radius: 16px; overflow: hidden; margin-bottom: 20px; }
         .list-item { display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 1px solid #2C2C2E; font-size: 17px; }
         .list-item:last-child { border-bottom: none; }
-        
+
+        /* --- PULSANTI --- */
         .pay-btn { width: 100%; padding: 16px; border-radius: 25px; border: none; font-size: 17px; font-weight: 700; margin: 10px 0; cursor: pointer; text-align: center; }
         .btn-blue { background: var(--accent); color: white; }
         .btn-green { background: var(--green); color: white; }
         .btn-red { background: var(--red); color: white; }
         
+        /* --- CONTANTI --- */
         .quick-cash { display: flex; gap: 10px; margin: 20px 0; justify-content: center; }
         .taglio-btn { background: var(--card); border: none; color: var(--accent); padding: 12px 20px; border-radius: 20px; font-size: 17px; font-weight: 500; flex: 1; text-align: center; }
 
         .input-group { background: var(--card); border-radius: 16px; display: flex; align-items: center; padding: 6px 16px; margin-bottom: 20px; }
         input { background: transparent; border: none; color: white; padding: 12px 0; font-size: 22px; width: 100%; outline: none; }
-        .clear-icon { color: var(--text-gray); font-size: 20px; padding: 5px; cursor: pointer; }
+		.clear-icon { color: var(--text-gray); font-size: 20px; padding: 5px; cursor: pointer; }
 
         .resto-area { background: rgba(255, 69, 58, 0.15); padding: 20px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .resto-label { color: var(--red); font-size: 17px; font-weight: 700; }
         .resto-value { color: var(--red); font-size: 22px; font-weight: 700; }
 
-        /* Elemento invisibile per il trucco della vibrazione iOS 18 */
+        /* --- SEZIONE CREDITS --- */
+        .credits {
+            text-align: center;
+            margin-top: 50px;
+            padding-bottom: 30px;
+            color: var(--text-gray);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .credits a {
+            color: var(--accent);
+            text-decoration: none;
+            display: block;
+            margin-top: 4px;
+        }
+
         #haptic-trigger { position: absolute; opacity: 0; pointer-events: none; visibility: hidden; }
     </style>
 </head>
@@ -162,7 +182,13 @@
             </div>
             <div class="section-header">Prodotti Venduti</div>
             <div class="inset-group" id="report-products"></div>
+            
             <button class="pay-btn btn-red" onclick="triggerHaptic(); resetReport()">AZZERA REPORT GIORNALIERO</button>
+
+            <div class="credits">
+                Credits Tommaso Conti
+                <a href="mailto:tommasoconti98@gmail.com">tommasoconti98@gmail.com</a>
+            </div>
         </div>
     </div>
 
