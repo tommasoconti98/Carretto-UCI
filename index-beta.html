@@ -34,103 +34,86 @@
             padding: calc(20px + env(safe-area-inset-top)) 20px 20px; 
             position: sticky; top: 0; 
             background: var(--bg); z-index: 100;
-            gap: 10px; /* Spazio minimo tra totale e bottoni */
         }
-        .total-box { flex: 1; min-width: 0; }
+        .total-box { flex: 1; }
         .total-label { font-size: 11px; font-weight: 700; color: var(--text-gray); text-transform: uppercase; margin-bottom: 4px; }
-        .total-amount { 
-            font-size: 32px; /* Ridotto da 44px per gestire cifre lunghe */
-            font-weight: 800; 
-            white-space: nowrap; 
-            letter-spacing: -1px; 
-            overflow: hidden; 
-            text-overflow: ellipsis; 
-        }
-        .header-btns { display: flex; gap: 8px; flex-shrink: 0; }
+        .total-amount { font-size: 44px; font-weight: 800; white-space: nowrap; letter-spacing: -1px; }
+        .header-btns { display: flex; gap: 12px; }
         .btn-circle { 
-            width: 42px; height: 42px; border-radius: 50%; border: none; 
+            width: 48px; height: 48px; border-radius: 50%; border: none; 
             color: white; display: flex; align-items: center; justify-content: center; 
-            font-size: 18px; cursor: pointer;
+            font-size: 20px; cursor: pointer;
         }
 
         /* --- GRIGLIA PRODOTTI --- */
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 0 20px 40px; }
-        .product-btn { 
-            background: var(--card); border: none; border-radius: 16px; padding: 18px 10px;
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 0 20px 20px; }
+        
+        .product-card { 
+            background: var(--card); border-radius: 16px; padding: 18px 10px;
             color: white; text-align: center; display: flex; flex-direction: column;
-            justify-content: center; min-height: 100px;
-        }
-        .product-btn:active { background: #2C2C2E; }
-        .p-name { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
-        .p-price { font-size: 14px; color: var(--accent); font-weight: 500; }
-
-        /* --- PAGINA PAGAMENTI --- */
-        .sheet { 
-            position: fixed; top: 0; left: 0; width: 100%; 
-            height: 100dvh; 
-            background: var(--bg); z-index: 1000; display: none; flex-direction: column; 
+            justify-content: center; min-height: 110px; position: relative;
+            border: 2px solid transparent; transition: all 0.2s;
         }
         
-        .sheet-header {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: calc(15px + env(safe-area-inset-top)) 20px 15px; 
-            background: var(--bg); z-index: 10;
+        /* Stile pulsante standard */
+        button.product-card:active { background: #2C2C2E; transform: scale(0.96); }
+
+        /* Stile modalità editing */
+        .edit-mode .product-card { border: 1px dashed var(--text-gray); }
+        .edit-mode input {
+            background: rgba(255,255,255,0.05); border: 1px solid #333;
+            color: white; text-align: center; width: 100%; border-radius: 6px;
+            font-family: inherit;
         }
-        .sheet-title { font-size: 32px; font-weight: 800; }
-        .btn-close { 
-            background: #2C2C2E; color: var(--text-gray); border: none; 
-            border-radius: 50%; width: 32px; height: 32px; 
-            font-size: 16px; font-weight: bold; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
+        .input-name { font-size: 14px; font-weight: 600; margin-bottom: 5px; padding: 4px; }
+        .input-price { font-size: 13px; color: var(--accent); padding: 2px; }
+        
+        .delete-btn {
+            position: absolute; top: -8px; right: -8px;
+            background: var(--red); color: white; border: none;
+            width: 24px; height: 24px; border-radius: 50%;
+            font-size: 14px; font-weight: bold; display: none;
+        }
+        .edit-mode .delete-btn { display: flex; align-items: center; justify-content: center; }
+
+        /* Quadrato Aggiungi */
+        .add-card {
+            background: transparent; border: 2px dashed #333;
+            color: #333; font-size: 40px; font-weight: 300;
         }
 
+        /* --- FOOTER EDIT --- */
+        .footer-actions { padding: 20px; display: flex; justify-content: center; margin-bottom: 40px; }
+        .btn-edit-toggle {
+            background: #1c1c1e; color: var(--text-gray); border: 1px solid #333;
+            padding: 10px 30px; border-radius: 20px; font-size: 14px; font-weight: 600;
+        }
+        .edit-mode-active .btn-edit-toggle { background: var(--green); color: white; border: none; }
+
+        /* --- PAGINA PAGAMENTI & REPORT (Invariati) --- */
+        .sheet { position: fixed; top: 0; left: 0; width: 100%; height: 100dvh; background: var(--bg); z-index: 1000; display: none; flex-direction: column; }
+        .sheet-header { display: flex; align-items: center; justify-content: space-between; padding: calc(15px + env(safe-area-inset-top)) 20px 15px; background: var(--bg); z-index: 10; }
+        .sheet-title { font-size: 32px; font-weight: 800; }
+        .btn-close { background: #2C2C2E; color: var(--text-gray); border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .sheet-content { padding: 0 20px 40px; overflow-y: auto; flex: 1; background: var(--bg); }
         .section-header { font-size: 13px; color: var(--text-gray); text-transform: uppercase; margin: 25px 0 8px 15px; font-weight: 600; }
         .inset-group { background: var(--card); border-radius: 16px; overflow: hidden; margin-bottom: 20px; }
         .list-item { display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 1px solid #2C2C2E; font-size: 17px; }
         .list-item:last-child { border-bottom: none; }
-
-        /* --- EDITOR PRODOTTI --- */
-        .edit-row { display: flex; gap: 10px; padding: 10px 15px; border-bottom: 1px solid #2C2C2E; align-items: center; }
-        .edit-row input { font-size: 15px; padding: 8px; border-radius: 8px; background: #2C2C2E; border: 1px solid #3A3A3C; color: white; }
-        .edit-row .input-name { flex: 2; }
-        .edit-row .input-price { flex: 1; }
-        .btn-del { background: var(--red); color: white; border: none; border-radius: 8px; padding: 8px 12px; }
-
-        /* --- PULSANTI --- */
         .pay-btn { width: 100%; padding: 16px; border-radius: 25px; border: none; font-size: 17px; font-weight: 700; margin: 10px 0; cursor: pointer; text-align: center; }
         .btn-blue { background: var(--accent); color: white; }
         .btn-green { background: var(--green); color: white; }
         .btn-red { background: var(--red); color: white; }
-        
-        /* --- CONTANTI --- */
         .quick-cash { display: flex; gap: 10px; margin: 20px 0; justify-content: center; }
         .taglio-btn { background: var(--card); border: none; color: var(--accent); padding: 12px 20px; border-radius: 20px; font-size: 17px; font-weight: 500; flex: 1; text-align: center; }
-
         .input-group { background: var(--card); border-radius: 16px; display: flex; align-items: center; padding: 6px 16px; margin-bottom: 20px; }
-        input { background: transparent; border: none; color: white; padding: 12px 0; font-size: 22px; width: 100%; outline: none; }
-		.clear-icon { color: var(--text-gray); font-size: 20px; padding: 5px; cursor: pointer; }
-
+        .input-group input { background: transparent; border: none; color: white; padding: 12px 0; font-size: 22px; width: 100%; outline: none; }
+        .clear-icon { color: var(--text-gray); font-size: 20px; padding: 5px; cursor: pointer; }
         .resto-area { background: rgba(255, 69, 58, 0.15); padding: 20px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .resto-label { color: var(--red); font-size: 17px; font-weight: 700; }
         .resto-value { color: var(--red); font-size: 22px; font-weight: 700; }
-
-        /* --- SEZIONE CREDITS --- */
-        .credits {
-            text-align: center;
-            margin-top: 50px;
-            padding-bottom: 30px;
-            color: var(--text-gray);
-            font-size: 13px;
-            line-height: 1.6;
-        }
-        .credits a {
-            color: var(--accent);
-            text-decoration: none;
-            display: block;
-            margin-top: 4px;
-        }
-
+        .credits { text-align: center; margin-top: 50px; padding-bottom: 30px; color: var(--text-gray); font-size: 13px; line-height: 1.6; }
+        .credits a { color: var(--accent); text-decoration: none; display: block; margin-top: 4px; }
         #haptic-trigger { position: absolute; opacity: 0; pointer-events: none; visibility: hidden; }
     </style>
 </head>
@@ -149,12 +132,15 @@
         <div class="header-btns">
             <button class="btn-circle" style="background: var(--red)" onclick="triggerHaptic(); clearCart()">🗑</button>
             <button class="btn-circle" style="background: var(--orange)" onclick="triggerHaptic(); toggleSheet('report-sheet', true)">📊</button>
-            <button class="btn-circle" style="background: var(--accent)" onclick="triggerHaptic(); toggleSheet('edit-sheet', true)">⚙️</button>
             <button class="btn-circle" style="background: #333" id="pay-btn-icon" onclick="triggerHaptic(); toggleSheet('pay-sheet', true)" disabled>💳</button>
         </div>
     </div>
 
     <div class="grid" id="product-grid"></div>
+
+    <div class="footer-actions" id="footer-actions">
+        <button class="btn-edit-toggle" onclick="toggleEditMode()">EDIT LISTINO</button>
+    </div>
 
     <div id="pay-sheet" class="sheet">
         <div class="sheet-header">
@@ -199,27 +185,8 @@
             </div>
             <div class="section-header">Prodotti Venduti</div>
             <div class="inset-group" id="report-products"></div>
-			
             <button class="pay-btn btn-red" onclick="triggerHaptic(); resetReport()">AZZERA REPORT GIORNALIERO</button>
-
-            <div class="credits">
-                Credits Tommaso Conti
-                <a href="mailto:tommasoconti98@gmail.com">tommasoconti98@gmail.com</a>
-            </div>
-        </div>
-    </div>
-	
-    <div id="edit-sheet" class="sheet">
-        <div class="sheet-header">
-            <span class="sheet-title">Prodotti</span>
-            <button class="btn-close" onclick="triggerHaptic(); toggleSheet('edit-sheet', false)">✕</button>
-        </div>
-        <div class="sheet-content">
-            <div class="section-header">Modifica Listino</div>
-            <div class="inset-group" id="edit-list-container"></div>
-            <button class="pay-btn btn-blue" onclick="triggerHaptic(); addNewProduct()">+ AGGIUNGI NUOVO PRODOTTO</button>
-            <button class="pay-btn btn-green" onclick="triggerHaptic(); saveProducts()">SALVA E AGGIORNA</button>
-            <button class="pay-btn" style="background:#333; color:white" onclick="triggerHaptic(); restoreDefaultProducts()">RIPRISTINA ORIGINALI</button>
+            <div class="credits">Credits Tommaso Conti<a href="mailto:tommasoconti98@gmail.com">tommasoconti98@gmail.com</a></div>
         </div>
     </div>
 
@@ -234,36 +201,93 @@
             {nome:"Mikado", prezzo:3.50}, {nome:"Skittles", prezzo:4.10},
             {nome:"Salamini Beretta", prezzo:3.50}, {nome:"Barretta Chupa", prezzo:2.00},
             {nome:"Maltisers", prezzo:4.90}, {nome:"Monster", prezzo:3.40},
-			{nome:"Rose of Dolomities", prezzo:2.50}, {nome:"Quadratini Loacker", prezzo:3.50}
+            {nome:"Rose of Dolomities", prezzo:2.50}, {nome:"Quadratini Loacker", prezzo:3.50}
         ];
 
-        let prodotti = JSON.parse(localStorage.getItem('uci_v8_prodotti')) || defaultProdotti;
+        let listino = JSON.parse(localStorage.getItem('uci_v8_listino')) || defaultProdotti;
         let carrello = [];
         let stats = JSON.parse(localStorage.getItem('uci_v8_stats')) || { carta: 0, contanti: 0, vendite: {} };
+        let isEditMode = false;
 
-        // --- FIX VIBRAZIONE PER iOS 18+ ---
         function triggerHaptic() {
-            // Per Android e browser che supportano lo standard
-            if (navigator.vibrate) {
-                navigator.vibrate(15);
-            }
-            // Per iOS 18+: Simula il click sulla label dell'input 'switch'
+            if (navigator.vibrate) navigator.vibrate(15);
             const hapticLabel = document.getElementById('haptic-label');
-            if (hapticLabel) {
-                hapticLabel.click();
-            }
+            if (hapticLabel) hapticLabel.click();
         }
 
         function renderGrid() {
             const grid = document.getElementById('product-grid');
             grid.innerHTML = '';
-            prodotti.forEach((p, index) => {
-                const btn = document.createElement('button');
-                btn.className = 'product-btn';
-                btn.innerHTML = `<span class="p-name">${p.nome}</span><span class="p-price">€ ${p.prezzo.toFixed(2).replace('.',',')}</span>`;
-                btn.onclick = () => { triggerHaptic(); carrello.push(p); updateUI(); };
-                grid.appendChild(btn);
+            
+            listino.forEach((p, index) => {
+                const card = document.createElement(isEditMode ? 'div' : 'button');
+                card.className = 'product-card';
+                
+                if (isEditMode) {
+                    card.innerHTML = `
+                        <button class="delete-btn" onclick="deleteProduct(${index})">✕</button>
+                        <input type="text" class="input-name" value="${p.nome}" oninput="updateProduct(${index}, 'nome', this.value)">
+                        <input type="number" step="0.1" class="input-price" value="${p.prezzo}" oninput="updateProduct(${index}, 'prezzo', this.value)">
+                    `;
+                } else {
+                    card.innerHTML = `<span class="p-name">${p.nome}</span><span class="p-price">€ ${p.prezzo.toFixed(2).replace('.',',')}</span>`;
+                    card.onclick = () => { triggerHaptic(); addToCart(p); };
+                }
+                grid.appendChild(card);
             });
+
+            if (isEditMode) {
+                const addBtn = document.createElement('div');
+                addBtn.className = 'product-card add-card';
+                addBtn.innerHTML = '+';
+                addBtn.onclick = addNewProduct;
+                grid.appendChild(addBtn);
+                document.body.classList.add('edit-mode-active');
+            } else {
+                document.body.classList.remove('edit-mode-active');
+            }
+        }
+
+        function toggleEditMode() {
+            triggerHaptic();
+            isEditMode = !isEditMode;
+            const btn = document.querySelector('.btn-edit-toggle');
+            const gridEl = document.getElementById('product-grid');
+            
+            if (isEditMode) {
+                btn.innerText = "SALVA LISTINO";
+                gridEl.classList.add('edit-mode');
+            } else {
+                btn.innerText = "EDIT LISTINO";
+                gridEl.classList.remove('edit-mode');
+                localStorage.setItem('uci_v8_listino', JSON.stringify(listino));
+            }
+            renderGrid();
+        }
+
+        function updateProduct(index, field, value) {
+            if (field === 'prezzo') {
+                listino[index][field] = parseFloat(value) || 0;
+            } else {
+                listino[index][field] = value;
+            }
+        }
+
+        function addNewProduct() {
+            triggerHaptic();
+            listino.push({nome: "Nuovo", prezzo: 0.00});
+            renderGrid();
+        }
+
+        function deleteProduct(index) {
+            triggerHaptic();
+            listino.splice(index, 1);
+            renderGrid();
+        }
+
+        function addToCart(p) {
+            carrello.push(p);
+            updateUI();
         }
 
         function updateUI() {
@@ -283,54 +307,11 @@
                 document.body.classList.add('modal-open');
                 if(id === 'pay-sheet') renderPay();
                 if(id === 'report-sheet') renderReport();
-                if(id === 'edit-sheet') renderEditList();
             } else {
                 document.body.classList.remove('modal-open');
             }
         }
 
-        // --- GESTIONE PRODOTTI ---
-        function renderEditList() {
-            const container = document.getElementById('edit-list-container');
-            container.innerHTML = prodotti.map((p, i) => `
-                <div class="edit-row">
-                    <input type="text" class="input-name" value="${p.nome}" onchange="updateTempProd(${i}, 'nome', this.value)">
-                    <input type="number" step="0.1" class="input-price" value="${p.prezzo}" onchange="updateTempProd(${i}, 'prezzo', this.value)">
-                    <button class="btn-del" onclick="deleteProd(${i})">🗑</button>
-                </div>
-            `).join('');
-        }
-
-        function updateTempProd(index, field, value) {
-            if(field === 'prezzo') value = parseFloat(value) || 0;
-            prodotti[index][field] = value;
-        }
-
-        function addNewProduct() {
-            prodotti.push({nome: "Nuovo Prodotto", prezzo: 0.00});
-            renderEditList();
-        }
-
-        function deleteProd(index) {
-            prodotti.splice(index, 1);
-            renderEditList();
-        }
-
-        function saveProducts() {
-            localStorage.setItem('uci_v8_prodotti', JSON.stringify(prodotti));
-            renderGrid();
-            toggleSheet('edit-sheet', false);
-            alert("Listino aggiornato con successo!");
-        }
-
-        function restoreDefaultProducts() {
-            if(confirm("Vuoi davvero tornare ai prezzi originali?")) {
-                prodotti = JSON.parse(JSON.stringify(defaultProdotti));
-                saveProducts();
-            }
-        }
-
-        // --- RESTO DEL CODICE (PAGAMENTI/REPORT) ---
         function renderPay() {
             const container = document.getElementById('order-summary');
             const totale = carrello.reduce((acc, p) => acc + p.prezzo, 0);
@@ -383,7 +364,7 @@
             }
         }
 
-        // Inizializzazione
+        // Init
         renderGrid();
     </script>
 </body>
