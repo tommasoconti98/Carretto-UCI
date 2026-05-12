@@ -52,17 +52,18 @@
             background: var(--card); border: none; border-radius: 16px; padding: 18px 10px;
             color: white; text-align: center; display: flex; flex-direction: column;
             justify-content: center; min-height: 110px; position: relative;
-            border: 2px solid transparent; transition: all 0.2s;
+            border: 2px solid transparent; transition: transform 0.2s, opacity 0.2s;
         }
 
-        /* Ripristino Stile Testo Originale */
         .p-name { font-size: 16px; font-weight: 600; margin-bottom: 6px; display: block; }
         .p-price { font-size: 14px; color: var(--accent); font-weight: 500; display: block; }
         
         button.product-card:active { background: #2C2C2E; transform: scale(0.96); }
 
         /* Stile modalità editing */
-        .edit-mode .product-card { border: 1px dashed var(--text-gray); }
+        .edit-mode .product-card { border: 1px dashed var(--text-gray); cursor: move; }
+        .edit-mode .product-card.dragging { opacity: 0.5; transform: scale(1.05); }
+        
         .edit-mode input {
             background: rgba(255,255,255,0.1); border: 1px solid #444;
             color: white; text-align: center; width: 100%; border-radius: 8px;
@@ -82,28 +83,27 @@
 
         .add-card {
             background: transparent; border: 2px dashed #333;
-            color: #333; font-size: 40px; font-weight: 300;
+            color: #333; font-size: 40px; font-weight: 300; cursor: pointer;
         }
 
         /* --- FOOTER EDIT --- */
-        .footer-actions { padding: 20px; display: flex; justify-content: center; margin-bottom: 60px; }
-        .btn-edit-toggle {
-            background: #1c1c1e; color: var(--text-gray); border: 1px solid #333;
-            padding: 12px 35px; border-radius: 25px; font-size: 14px; font-weight: 600;
-            letter-spacing: 0.5px;
+        .footer-actions { padding: 20px; display: flex; gap: 10px; justify-content: center; margin-bottom: 60px; }
+        .btn-edit-toggle, .btn-reset-list {
+            padding: 12px 25px; border-radius: 25px; font-size: 14px; font-weight: 600;
+            letter-spacing: 0.5px; border: 1px solid #333; cursor: pointer;
         }
+        .btn-edit-toggle { background: #1c1c1e; color: var(--text-gray); }
         .edit-mode-active .btn-edit-toggle { background: var(--green); color: white; border: none; }
+        .btn-reset-list { background: #1c1c1e; color: var(--red); display: none; }
+        .edit-mode-active .btn-reset-list { display: block; }
 
-        /* --- RESTO DELL'INTERFACCIA --- */
+        /* --- SHEETS --- */
         .sheet { position: fixed; top: 0; left: 0; width: 100%; height: 100dvh; background: var(--bg); z-index: 1000; display: none; flex-direction: column; }
         .sheet-header { display: flex; align-items: center; justify-content: space-between; padding: calc(15px + env(safe-area-inset-top)) 20px 15px; background: var(--bg); z-index: 10; }
         .sheet-title { font-size: 32px; font-weight: 800; }
         .btn-close { background: #2C2C2E; color: var(--text-gray); border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .sheet-content { padding: 0 20px 40px; overflow-y: auto; flex: 1; background: var(--bg); }
-        .section-header { font-size: 13px; color: var(--text-gray); text-transform: uppercase; margin: 25px 0 8px 15px; font-weight: 600; }
-        .inset-group { background: var(--card); border-radius: 16px; overflow: hidden; margin-bottom: 20px; }
         .list-item { display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 1px solid #2C2C2E; font-size: 17px; }
-        .list-item:last-child { border-bottom: none; }
         .pay-btn { width: 100%; padding: 16px; border-radius: 25px; border: none; font-size: 17px; font-weight: 700; margin: 10px 0; cursor: pointer; text-align: center; }
         .btn-blue { background: var(--accent); color: white; }
         .btn-green { background: var(--green); color: white; }
@@ -112,7 +112,6 @@
         .taglio-btn { background: var(--card); border: none; color: var(--accent); padding: 12px 20px; border-radius: 20px; font-size: 17px; font-weight: 500; flex: 1; text-align: center; }
         .input-group { background: var(--card); border-radius: 16px; display: flex; align-items: center; padding: 6px 16px; margin-bottom: 20px; }
         .input-group input { background: transparent; border: none; color: white; padding: 12px 0; font-size: 22px; width: 100%; outline: none; }
-        .clear-icon { color: var(--text-gray); font-size: 20px; padding: 5px; cursor: pointer; }
         .resto-area { background: rgba(255, 69, 58, 0.15); padding: 20px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .resto-label { color: var(--red); font-size: 17px; font-weight: 700; }
         .resto-value { color: var(--red); font-size: 22px; font-weight: 700; }
@@ -143,7 +142,8 @@
     <div class="grid" id="product-grid"></div>
 
     <div class="footer-actions">
-        <button class="btn-edit-toggle" onclick="toggleEditMode()">EDIT LISTINO</button>
+        <button class="btn-reset-list" onclick="restoreDefaults()">RESET</button>
+        <button class="btn-edit-toggle" onclick="toggleEditMode()">EDIT</button>
     </div>
 
     <div id="pay-sheet" class="sheet">
@@ -152,25 +152,21 @@
             <button class="btn-close" onclick="triggerHaptic(); toggleSheet('pay-sheet', false)">✕</button>
         </div>
         <div class="sheet-content">
-            <div class="section-header">Riepilogo Ordine</div>
-            <div class="inset-group" id="order-summary"></div>
-            <div class="section-header">Pagamento con Carta</div>
+            <div id="order-summary"></div>
             <button class="pay-btn btn-blue" onclick="triggerHaptic(); confirmPayment('carta')">PAGATO CON CARTA</button>
-            <div class="section-header">Pagamento in Contanti</div>
             <div class="quick-cash">
-                <button class="taglio-btn" onclick="triggerHaptic(); quickCash(2)">€2</button>
-                <button class="taglio-btn" onclick="triggerHaptic(); quickCash(5)">€5</button>
-                <button class="taglio-btn" onclick="triggerHaptic(); quickCash(10)">€10</button>
-                <button class="taglio-btn" onclick="triggerHaptic(); quickCash(20)">€20</button>
-                <button class="taglio-btn" onclick="triggerHaptic(); quickCash(50)">€50</button>
+                <button class="taglio-btn" onclick="quickCash(2)">€2</button>
+                <button class="taglio-btn" onclick="quickCash(5)">€5</button>
+                <button class="taglio-btn" onclick="quickCash(10)">€10</button>
+                <button class="taglio-btn" onclick="quickCash(20)">€20</button>
+                <button class="taglio-btn" onclick="quickCash(50)">€50</button>
             </div>
             <div class="input-group">
                 <input type="text" inputmode="decimal" id="cash-received" placeholder="Importo ricevuto" oninput="checkCash()">
-                <span class="clear-icon" onclick="triggerHaptic(); clearInput()">✕</span>
             </div>
             <div id="resto-container" style="display: none;">
                 <div class="resto-area"><span class="resto-label">RESTO:</span><span id="resto-value" class="resto-value">€ 0,00</span></div>
-                <button class="pay-btn btn-green" onclick="triggerHaptic(); confirmPayment('contanti')">CONFERMA E CHIUDI</button>
+                <button class="pay-btn btn-green" onclick="triggerHaptic(); confirmPayment('contanti')">CONFERMA</button>
             </div>
         </div>
     </div>
@@ -181,16 +177,12 @@
             <button class="btn-close" onclick="triggerHaptic(); toggleSheet('report-sheet', false)">✕</button>
         </div>
         <div class="sheet-content">
-            <div class="section-header">Incassi</div>
-            <div class="inset-group">
-                <div class="list-item"><span>Carta</span><span id="rep-carta">€ 0,00</span></div>
-                <div class="list-item"><span>Contanti</span><span id="rep-contanti">€ 0,00</span></div>
-                <div class="list-item" style="font-weight: 600;"><span>TOTALE</span><span id="rep-totale" style="color: var(--green); font-size: 20px;">€ 0,00</span></div>
-            </div>
-            <div class="section-header">Prodotti Venduti</div>
-            <div class="inset-group" id="report-products"></div>
-            <button class="pay-btn btn-red" onclick="triggerHaptic(); resetReport()">AZZERA REPORT GIORNALIERO</button>
-            <div class="credits">Credits Tommaso Conti<a href="mailto:tommasoconti98@gmail.com">tommasoconti98@gmail.com</a></div>
+            <div class="list-item"><span>Carta</span><span id="rep-carta">€ 0,00</span></div>
+            <div class="list-item"><span>Contanti</span><span id="rep-contanti">€ 0,00</span></div>
+            <div class="list-item"><span>TOTALE</span><span id="rep-totale" style="color: var(--green)">€ 0,00</span></div>
+            <div id="report-products"></div>
+            <button class="pay-btn btn-red" onclick="triggerHaptic(); resetReport()">AZZERA GIORNATA</button>
+            <div class="credits">Credits Tommaso Conti<br><a href="mailto:tommasoconti98@gmail.com">tommasoconti98@gmail.com</a></div>
         </div>
     </div>
 
@@ -208,10 +200,11 @@
             {nome:"Rose of Dolomities", prezzo:2.50}, {nome:"Quadratini Loacker", prezzo:3.50}
         ];
 
-        let listino = JSON.parse(localStorage.getItem('uci_v8_listino')) || defaultProdotti;
+        let listino = JSON.parse(localStorage.getItem('uci_v8_listino')) || [...defaultProdotti];
         let carrello = [];
         let stats = JSON.parse(localStorage.getItem('uci_v8_stats')) || { carta: 0, contanti: 0, vendite: {} };
         let isEditMode = false;
+        let dragSourceIndex = null;
 
         function triggerHaptic() {
             if (navigator.vibrate) navigator.vibrate(15);
@@ -226,13 +219,26 @@
             listino.forEach((p, index) => {
                 const card = document.createElement(isEditMode ? 'div' : 'button');
                 card.className = 'product-card';
-                
-                if (isEditMode) {
+                if(isEditMode) {
+                    card.draggable = true;
                     card.innerHTML = `
                         <button class="delete-btn" onclick="deleteProduct(${index})">✕</button>
                         <input type="text" class="input-name" value="${p.nome}" oninput="updateProduct(${index}, 'nome', this.value)">
                         <input type="number" step="0.1" class="input-price" value="${p.prezzo}" oninput="updateProduct(${index}, 'prezzo', this.value)">
                     `;
+                    // Drag Events
+                    card.addEventListener('dragstart', (e) => {
+                        dragSourceIndex = index;
+                        card.classList.add('dragging');
+                    });
+                    card.addEventListener('dragover', (e) => e.preventDefault());
+                    card.addEventListener('drop', (e) => {
+                        const targetIndex = index;
+                        const movedItem = listino.splice(dragSourceIndex, 1)[0];
+                        listino.splice(targetIndex, 0, movedItem);
+                        renderGrid();
+                    });
+                    card.addEventListener('dragend', () => card.classList.remove('dragging'));
                 } else {
                     card.innerHTML = `<span class="p-name">${p.nome}</span><span class="p-price">€ ${p.prezzo.toFixed(2).replace('.',',')}</span>`;
                     card.onclick = () => { triggerHaptic(); addToCart(p); };
@@ -256,25 +262,23 @@
             triggerHaptic();
             isEditMode = !isEditMode;
             const btn = document.querySelector('.btn-edit-toggle');
-            const gridEl = document.getElementById('product-grid');
-            
-            if (isEditMode) {
-                btn.innerText = "SALVA LISTINO";
-                gridEl.classList.add('edit-mode');
-            } else {
-                btn.innerText = "EDIT LISTINO";
-                gridEl.classList.remove('edit-mode');
-                localStorage.setItem('uci_v8_listino', JSON.stringify(listino));
-            }
+            btn.innerText = isEditMode ? "SALVA" : "EDIT";
+            if (!isEditMode) localStorage.setItem('uci_v8_listino', JSON.stringify(listino));
             renderGrid();
         }
 
-        function updateProduct(index, field, value) {
-            if (field === 'prezzo') {
-                listino[index][field] = parseFloat(value) || 0;
-            } else {
-                listino[index][field] = value;
+        function restoreDefaults() {
+            if(confirm("Sei sicuro di voler ripristinare il listino originale? Perderai tutte le modifiche.")) {
+                triggerHaptic();
+                listino = JSON.parse(JSON.stringify(defaultProdotti));
+                localStorage.setItem('uci_v8_listino', JSON.stringify(listino));
+                renderGrid();
             }
+        }
+
+        function updateProduct(index, field, value) {
+            if (field === 'prezzo') listino[index][field] = parseFloat(value) || 0;
+            else listino[index][field] = value;
         }
 
         function addNewProduct() {
@@ -289,10 +293,7 @@
             renderGrid();
         }
 
-        function addToCart(p) {
-            carrello.push(p);
-            updateUI();
-        }
+        function addToCart(p) { carrello.push(p); updateUI(); }
 
         function updateUI() {
             const totale = carrello.reduce((acc, p) => acc + p.prezzo, 0);
@@ -311,25 +312,19 @@
                 document.body.classList.add('modal-open');
                 if(id === 'pay-sheet') renderPay();
                 if(id === 'report-sheet') renderReport();
-            } else {
-                document.body.classList.remove('modal-open');
-            }
+            } else { document.body.classList.remove('modal-open'); }
         }
 
         function renderPay() {
             const container = document.getElementById('order-summary');
             const totale = carrello.reduce((acc, p) => acc + p.prezzo, 0);
-            let html = carrello.map(p => `<div class="list-item"><span>${p.nome}</span><span>€ ${p.prezzo.toFixed(2).replace('.',',')}</span></div>`).join('');
-            html += `<div class="list-item" style="font-weight:600;"><span>DA PAGARE</span><span style="color:var(--accent);">€ ${totale.toFixed(2).replace('.',',')}</span></div>`;
-            container.innerHTML = html;
+            container.innerHTML = carrello.map(p => `<div class="list-item"><span>${p.nome}</span><span>€ ${p.prezzo.toFixed(2).replace('.',',')}</span></div>`).join('') + 
+                `<div class="list-item" style="font-weight:600;"><span>DA PAGARE</span><span style="color:var(--accent);">€ ${totale.toFixed(2).replace('.',',')}</span></div>`;
             document.getElementById('resto-container').style.display = 'none';
             document.getElementById('cash-received').value = '';
         }
 
-        function quickCash(val) {
-            document.getElementById('cash-received').value = val.toFixed(2).replace('.', ',');
-            checkCash();
-        }
+        function quickCash(val) { document.getElementById('cash-received').value = val.toFixed(2).replace('.', ','); checkCash(); }
 
         function checkCash() {
             const totale = carrello.reduce((acc, p) => acc + p.prezzo, 0);
@@ -340,12 +335,10 @@
             } else { document.getElementById('resto-container').style.display = 'none'; }
         }
 
-        function clearInput() { document.getElementById('cash-received').value = ''; checkCash(); }
-
         function confirmPayment(m) {
             const totale = carrello.reduce((acc, p) => acc + p.prezzo, 0);
             if(m === 'carta') stats.carta += totale; else stats.contanti += totale;
-            carrello.forEach(p => { stats.vendite[p.nome] = (stats.vendite[p.nome] || 0) + 1; });
+            carrello.forEach(p => stats.vendite[p.nome] = (stats.vendite[p.nome] || 0) + 1);
             localStorage.setItem('uci_v8_stats', JSON.stringify(stats));
             clearCart(); toggleSheet('pay-sheet', false);
         }
@@ -354,13 +347,11 @@
             document.getElementById('rep-carta').innerText = `€ ${stats.carta.toFixed(2).replace('.',',')}`;
             document.getElementById('rep-contanti').innerText = `€ ${stats.contanti.toFixed(2).replace('.',',')}`;
             document.getElementById('rep-totale').innerText = `€ ${(stats.carta + stats.contanti).toFixed(2).replace('.',',')}`;
-            const prodContainer = document.getElementById('report-products');
-            let vHtml = Object.entries(stats.vendite).sort().map(([n, q]) => `<div class="list-item"><span>${n}</span><span>${q}</span></div>`).join('');
-            prodContainer.innerHTML = vHtml || '<div class="list-item" style="color:gray; font-style:italic;">Nessuna vendita</div>';
+            document.getElementById('report-products').innerHTML = Object.entries(stats.vendite).sort().map(([n, q]) => `<div class="list-item"><span>${n}</span><span>${q}</span></div>`).join('') || '<div class="list-item">Nessuna vendita</div>';
         }
 
         function resetReport() {
-            if(confirm("Sei sicuro di voler AZZERARE il report giornaliero?")) {
+            if(confirm("Azzerare il report?")) {
                 triggerHaptic();
                 stats = { carta: 0, contanti: 0, vendite: {} };
                 localStorage.setItem('uci_v8_stats', JSON.stringify(stats));
