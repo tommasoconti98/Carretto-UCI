@@ -55,7 +55,7 @@
             background: var(--card); border: none; border-radius: 16px; padding: 18px 10px;
             color: white; text-align: center; display: flex; flex-direction: column;
             justify-content: center; min-height: 100px; position: relative;
-            word-break: break-word; /* Evita deformazioni con parole lunghissime */
+            word-break: break-word;
         }
         .product-btn:active { background: #2C2C2E; }
         .p-name { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
@@ -104,11 +104,9 @@
         .section-header { font-size: 13px; color: var(--text-gray); text-transform: uppercase; margin: 25px 0 8px 15px; font-weight: 600; }
         .inset-group { background: var(--card); border-radius: 16px; overflow: hidden; margin-bottom: 20px; }
         
-        /* Correzione per simbolo € e cifra sulla stessa riga */
         .list-item { display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 1px solid #2C2C2E; font-size: 17px; }
         .list-item span:first-child { flex: 1; padding-right: 15px; word-break: break-word; }
         .list-item span:last-child { white-space: nowrap; flex-shrink: 0; }
-        
         .list-item:last-child { border-bottom: none; }
 
         .pay-btn { width: 100%; padding: 16px; border-radius: 25px; border: none; font-size: 17px; font-weight: 700; margin: 10px 0; cursor: pointer; text-align: center; }
@@ -353,7 +351,25 @@
         function renderPay() {
             const container = document.getElementById('order-summary');
             const totale = carrello.reduce((acc, p) => acc + p.prezzo, 0);
-            let html = carrello.map(p => `<div class="list-item"><span>${p.nome}</span><span>€ ${p.prezzo.toFixed(2).replace('.',',')}</span></div>`).join('');
+            
+            // Raggruppamento per nome
+            const raggruppato = carrello.reduce((acc, p) => {
+                if (!acc[p.nome]) {
+                    acc[p.nome] = { qta: 0, prezzoUnitario: p.prezzo };
+                }
+                acc[p.nome].qta++;
+                return acc;
+            }, {});
+
+            let html = Object.entries(raggruppato).map(([nome, dati]) => {
+                const subTotale = dati.qta * dati.prezzoUnitario;
+                return `
+                    <div class="list-item">
+                        <span>${nome} ${dati.qta > 1 ? `<b>(x${dati.qta})</b>` : ''}</span>
+                        <span>€ ${subTotale.toFixed(2).replace('.',',')}</span>
+                    </div>`;
+            }).join('');
+
             html += `<div class="list-item" style="font-weight:600;"><span>DA PAGARE</span><span style="color:var(--accent);">€ ${totale.toFixed(2).replace('.',',')}</span></div>`;
             container.innerHTML = html;
             document.getElementById('resto-container').style.display = 'none';
