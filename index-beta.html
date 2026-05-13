@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#000000">
     <title>Carretto UCI</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -20,9 +21,12 @@
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
+        /* Forziamo lo sfondo nero per evitare glitch di colore nelle barre di sistema */
+        html, body { background: var(--bg); margin: 0; padding: 0; }
+
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; 
-            background: var(--bg); color: white; margin: 0; 
+            color: white;
             padding: 0 0 env(safe-area-inset-bottom);
         }
 
@@ -59,7 +63,18 @@
         /* --- MODALITÀ EDIT --- */
         .editable-text { border: 1px dashed white; border-radius: 4px; padding: 2px; display: inline-block; min-width: 40px; outline: none; }
         .add-btn { background: transparent; border: 2px dashed #333; color: #333; font-size: 40px; display: flex; align-items: center; justify-content: center; border-radius: 16px; min-height: 100px; cursor: pointer; }
-        .footer-actions { padding: 20px; display: flex; justify-content: center; gap: 15px; margin-bottom: 40px; }
+        
+        /* Tasto elimina X */
+        .btn-delete {
+            position: absolute; top: -8px; right: -8px;
+            background: var(--red); color: white;
+            width: 26px; height: 26px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: bold; border: 2px solid var(--bg);
+            z-index: 5;
+        }
+
+        .footer-actions { padding: 20px; display: flex; justify-content: center; gap: 15px; margin-bottom: 40px; background: var(--bg); }
         .action-btn { padding: 12px 25px; border-radius: 20px; font-weight: 600; cursor: pointer; border: 1px solid #333; font-size: 14px; }
         .btn-edit { background: #1c1c1e; color: var(--text-gray); }
         .btn-save { background: var(--green); color: white; border: none; }
@@ -91,13 +106,11 @@
         .list-item { display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 1px solid #2C2C2E; font-size: 17px; }
         .list-item:last-child { border-bottom: none; }
 
-        /* --- PULSANTI --- */
         .pay-btn { width: 100%; padding: 16px; border-radius: 25px; border: none; font-size: 17px; font-weight: 700; margin: 10px 0; cursor: pointer; text-align: center; }
         .btn-blue { background: var(--accent); color: white; }
         .btn-green { background: var(--green); color: white; }
         .btn-red { background: var(--red); color: white; }
         
-        /* --- CONTANTI --- */
         .quick-cash { display: flex; gap: 10px; margin: 20px 0; justify-content: center; }
         .taglio-btn { background: var(--card); border: none; color: var(--accent); padding: 12px 20px; border-radius: 20px; font-size: 17px; font-weight: 500; flex: 1; text-align: center; }
 
@@ -165,11 +178,11 @@
             <button class="pay-btn btn-blue" onclick="triggerHaptic(); confirmPayment('carta')">PAGATO CON CARTA</button>
             <div class="section-header">Pagamento in Contanti</div>
             <div class="quick-cash">
-                <button class="taglio-btn" onclick="triggerHaptic(); quickCash(2)">€2</button>
-                <button class="taglio-btn" onclick="triggerHaptic(); quickCash(5)">€5</button>
-                <button class="taglio-btn" onclick="triggerHaptic(); quickCash(10)">€10</button>
-                <button class="taglio-btn" onclick="triggerHaptic(); quickCash(20)">€20</button>
-                <button class="taglio-btn" onclick="triggerHaptic(); quickCash(50)">€50</button>
+                <button class="taglio-btn" onclick="quickCash(2)">€2</button>
+                <button class="taglio-btn" onclick="quickCash(5)">€5</button>
+                <button class="taglio-btn" onclick="quickCash(10)">€10</button>
+                <button class="taglio-btn" onclick="quickCash(20)">€20</button>
+                <button class="taglio-btn" onclick="quickCash(50)">€50</button>
             </div>
             <div class="input-group">
                 <input type="text" inputmode="decimal" id="cash-received" placeholder="Importo ricevuto" oninput="checkCash()">
@@ -220,20 +233,15 @@
 			{nome:"Rose of Dolomities", prezzo:2.50}, {nome:"Quadratini Loacker", prezzo:3.50}
         ];
 
-        let prodotti = JSON.parse(localStorage.getItem('uci_listino_custom')) || defaultProdotti;
+        let prodotti = JSON.parse(localStorage.getItem('uci_listino_custom')) || defaultProdotti.map(p => ({...p}));
         let carrello = [];
         let stats = JSON.parse(localStorage.getItem('uci_v8_stats')) || { carta: 0, contanti: 0, vendite: {} };
         let isEditMode = false;
 
-        // --- FIX VIBRAZIONE PER iOS 18+ ---
         function triggerHaptic() {
-            if (navigator.vibrate) {
-                navigator.vibrate(15);
-            }
+            if (navigator.vibrate) navigator.vibrate(15);
             const hapticLabel = document.getElementById('haptic-label');
-            if (hapticLabel) {
-                hapticLabel.click();
-            }
+            if (hapticLabel) hapticLabel.click();
         }
 
         function renderGrid() {
@@ -241,19 +249,24 @@
             grid.innerHTML = '';
             
             prodotti.forEach((p, index) => {
-                const btn = document.createElement(isEditMode ? 'div' : 'button');
-                btn.className = 'product-btn';
+                const container = document.createElement('div');
+                container.className = isEditMode ? 'product-btn' : 'product-btn';
                 
                 if (isEditMode) {
-                    btn.innerHTML = `
+                    container.innerHTML = `
+                        <div class="btn-delete" onclick="triggerHaptic(); deleteProduct(${index})">✕</div>
                         <span class="p-name editable-text" contenteditable="true" onblur="updateProdData(${index}, 'nome', this.innerText)">${p.nome}</span>
                         <span class="p-price editable-text" contenteditable="true" onblur="updateProdData(${index}, 'prezzo', this.innerText)">${p.prezzo.toFixed(2).replace('.',',')}</span>
                     `;
                 } else {
+                    const btn = document.createElement('button');
+                    btn.className = 'product-btn';
                     btn.innerHTML = `<span class="p-name">${p.nome}</span><span class="p-price">€ ${p.prezzo.toFixed(2).replace('.',',')}</span>`;
                     btn.onclick = () => { triggerHaptic(); carrello.push(p); updateUI(); };
+                    grid.appendChild(btn);
+                    return;
                 }
-                grid.appendChild(btn);
+                grid.appendChild(container);
             });
 
             if (isEditMode) {
@@ -263,6 +276,11 @@
                 addBtn.onclick = () => { triggerHaptic(); addNewProduct(); };
                 grid.appendChild(addBtn);
             }
+        }
+
+        function deleteProduct(index) {
+            prodotti.splice(index, 1);
+            renderGrid();
         }
 
         function updateProdData(index, field, value) {
@@ -297,8 +315,9 @@
         }
 
         function resetListino() {
-            if(confirm("Vuoi davvero ripristinare i prodotti e i prezzi originali?")) {
-                prodotti = [...defaultProdotti];
+            if(confirm("Vuoi davvero ripristinare i prodotti e i prezzi originali? Verranno eliminati anche i prodotti aggiunti.")) {
+                // Creiamo una copia profonda dei default per evitare mutazioni
+                prodotti = defaultProdotti.map(p => ({...p}));
                 localStorage.removeItem('uci_listino_custom');
                 saveListino();
             }
@@ -378,7 +397,6 @@
             }
         }
 
-        // Inizializzazione
         renderGrid();
     </script>
 </body>
