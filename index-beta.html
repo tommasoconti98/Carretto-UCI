@@ -24,7 +24,7 @@
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; 
             background: var(--bg); color: white; margin: 0; 
             padding: 0 0 env(safe-area-inset-bottom);
-            user-select: none; /* Impedisce selezioni fastidiose durante il drag */
+            user-select: none;
         }
 
         body.modal-open { overflow: hidden; position: fixed; width: 100%; }
@@ -48,9 +48,8 @@
         .product-card { 
             background: var(--card); border-radius: 16px; padding: 18px 10px;
             color: white; text-align: center; display: flex; flex-direction: column;
-            justify-content: center; min-height: 110px; position: relative;
-            transition: transform 0.3s ease-out, opacity 0.2s;
-            border: 2px solid transparent;
+            justify-content: center; min-height: 120px; position: relative;
+            transition: transform 0.3s ease, opacity 0.2s;
         }
         
         .p-name { font-size: 16px; font-weight: 600; margin-bottom: 6px; display: block; outline: none; }
@@ -58,25 +57,32 @@
         
         button.product-card:active { background: #2C2C2E; transform: scale(0.96); }
 
-        /* --- EDIT MODE --- */
-        .edit-mode .product-card { border: 1px dashed #444; touch-action: none; }
-        .edit-mode .product-card.dragging { opacity: 0.6; transform: scale(1.08); z-index: 1000; box-shadow: 0 15px 30px rgba(0,0,0,0.5); border-style: solid; border-color: var(--accent); }
-
-        /* Spazi per l'editing del testo */
-        .p-name[contenteditable="true"], .p-price[contenteditable="true"] {
+        /* --- EDIT MODE VISUALS --- */
+        .edit-mode .product-card { border: 1px solid #333; }
+        
+        /* Box intorno al testo in edit mode */
+        .edit-mode .p-name, .edit-mode .p-price { 
+            border: 1px dashed rgba(255,255,255,0.3); 
+            border-radius: 6px; 
+            padding: 4px;
+            margin: 2px 0;
+            background: rgba(255,255,255,0.05);
             user-select: text;
-            -webkit-user-modify: read-write-plaintext-only;
         }
+        .edit-mode .p-price { border-color: rgba(10, 132, 255, 0.4); }
 
-        /* Pulsanti X e Handle (iOS Style) */
+        .edit-mode .product-card.dragging { opacity: 0.6; transform: scale(1.05); z-index: 1000; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+
+        /* Pulsanti visibili */
         .delete-btn, .drag-handle {
-            position: absolute; width: 30px; height: 30px; border-radius: 50%;
-            display: none; align-items: center; justify-content: center; z-index: 10;
+            position: absolute; width: 32px; height: 32px; border-radius: 50%;
+            display: none !important; align-items: center; justify-content: center; z-index: 50;
+            border: none;
         }
-        .edit-mode .delete-btn, .edit-mode .drag-handle { display: flex; }
+        .edit-mode .delete-btn, .edit-mode .drag-handle { display: flex !important; }
 
-        .delete-btn { top: -10px; right: -10px; background: var(--red); color: white; font-size: 14px; font-weight: bold; border: none; }
-        .drag-handle { top: -10px; left: -10px; background: #333; color: white; font-size: 18px; cursor: grab; border: none; }
+        .delete-btn { top: 5px; right: 5px; background: var(--red); color: white; font-size: 16px; font-weight: bold; }
+        .drag-handle { top: 5px; left: 5px; background: var(--orange); color: black; font-size: 20px; cursor: move; touch-action: none; }
 
         .add-card { background: transparent; border: 2px dashed #333; color: #333; font-size: 40px; cursor: pointer; }
 
@@ -88,12 +94,8 @@
         .edit-mode-active .btn-edit { background: var(--green); color: white; }
         .edit-mode-active .btn-reset { display: block; }
 
-        /* --- ALTRI ELEMENTI --- */
         .sheet { position: fixed; top: 0; left: 0; width: 100%; height: 100dvh; background: var(--bg); z-index: 1000; display: none; flex-direction: column; }
-        .sheet-header { display: flex; align-items: center; justify-content: space-between; padding: calc(15px + env(safe-area-inset-top)) 20px 15px; }
-        .list-item { display: flex; justify-content: space-between; padding: 16px; border-bottom: 1px solid #2C2C2E; }
         .credits { text-align: center; margin-top: 50px; padding-bottom: 30px; color: var(--text-gray); font-size: 13px; }
-        .credits a { color: var(--accent); text-decoration: none; }
         #haptic-trigger { position: absolute; opacity: 0; pointer-events: none; }
     </style>
 </head>
@@ -105,9 +107,7 @@
     </div>
 
     <div class="header">
-        <div class="total-box">
-            <div id="main-total" class="total-amount">€ 0,00</div>
-        </div>
+        <div class="total-box"><div id="main-total" class="total-amount">€ 0,00</div></div>
         <div class="header-btns">
             <button class="btn-circle" style="background: var(--red)" onclick="triggerHaptic(); clearCart()">🗑</button>
             <button class="btn-circle" style="background: var(--orange)" onclick="triggerHaptic(); toggleSheet('report-sheet', true)">📊</button>
@@ -123,23 +123,20 @@
     </div>
 
     <div id="report-sheet" class="sheet">
-        <div class="sheet-header">
+        <div style="padding: 20px; display:flex; justify-content:space-between; align-items:center;">
             <span style="font-size:32px; font-weight:800">Report</span>
             <button onclick="toggleSheet('report-sheet', false)" style="background:#222; border:none; color:white; border-radius:50%; width:32px; height:32px">✕</button>
         </div>
-        <div class="sheet-content" style="padding:20px">
-            <div id="report-list"></div>
-            <button class="btn-act btn-red" style="width:100%; max-width:none; margin-top:20px" onclick="resetReport()">AZZERA GIORNATA</button>
-            <div class="credits">Credits Tommaso Conti<br><a href="mailto:tommasoconti98@gmail.com">tommasoconti98@gmail.com</a></div>
-        </div>
+        <div id="report-list" style="padding:20px; flex:1; overflow-y:auto;"></div>
+        <div class="credits">Credits Tommaso Conti<br><a href="mailto:tommasoconti98@gmail.com" style="color:var(--accent); text-decoration:none;">tommasoconti98@gmail.com</a></div>
     </div>
 
     <div id="pay-sheet" class="sheet">
-        <div class="sheet-header">
+        <div style="padding: 20px; display:flex; justify-content:space-between; align-items:center;">
             <span style="font-size:32px; font-weight:800">Cassa</span>
             <button onclick="toggleSheet('pay-sheet', false)" style="background:#222; border:none; color:white; border-radius:50%; width:32px; height:32px">✕</button>
         </div>
-        <div id="order-summary" style="padding:20px"></div>
+        <div id="order-summary" style="padding:20px;"></div>
     </div>
 
     <script>
@@ -179,7 +176,7 @@
                 
                 if (isEditMode) {
                     card.innerHTML = `
-                        <div class="drag-handle">≡</div>
+                        <button class="drag-handle">≡</button>
                         <button class="delete-btn" onclick="deleteProduct(${index})">✕</button>
                         <span class="p-name" contenteditable="true" onblur="updateText(${index}, 'nome', this.innerText)">${p.nome}</span>
                         <span class="p-price" contenteditable="true" onblur="updateText(${index}, 'prezzo', this.innerText)">${Number(p.prezzo).toFixed(2).replace('.',',')}</span>
@@ -187,8 +184,13 @@
                     
                     const handle = card.querySelector('.drag-handle');
                     
-                    // Logic Drag & Slide
-                    const onMove = (e) => {
+                    const startDrag = (e) => {
+                        dragIdx = index;
+                        card.classList.add('dragging');
+                        triggerHaptic();
+                    };
+
+                    const moveDrag = (e) => {
                         if (dragIdx === null) return;
                         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
                         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -205,16 +207,14 @@
                         if(e.cancelable) e.preventDefault();
                     };
 
-                    const onStart = () => { dragIdx = index; card.classList.add('dragging'); triggerHaptic(); };
-                    const onEnd = () => { dragIdx = null; card.classList.remove('dragging'); triggerHaptic(); };
+                    const endDrag = () => { dragIdx = null; card.classList.remove('dragging'); };
 
-                    handle.onmousedown = onStart;
-                    window.onmousemove = onMove;
-                    window.onmouseup = onEnd;
-
-                    handle.ontouchstart = onStart;
-                    handle.ontouchmove = onMove;
-                    handle.ontouchend = onEnd;
+                    handle.onmousedown = startDrag;
+                    handle.ontouchstart = startDrag;
+                    window.onmousemove = moveDrag;
+                    window.ontouchmove = moveDrag;
+                    window.onmouseup = endDrag;
+                    window.ontouchend = endDrag;
 
                 } else {
                     card.innerHTML = `<span class="p-name">${p.nome}</span><span class="p-price">€ ${Number(p.prezzo).toFixed(2).replace('.',',')}</span>`;
@@ -273,12 +273,7 @@
         }
 
         function clearCart() { carrello = []; updateUI(); }
-
-        function toggleSheet(id, show) {
-            document.getElementById(id).style.display = show ? 'flex' : 'none';
-            if(show) document.body.classList.add('modal-open');
-            else document.body.classList.remove('modal-open');
-        }
+        function toggleSheet(id, show) { document.getElementById(id).style.display = show ? 'flex' : 'none'; if(show) document.body.classList.add('modal-open'); else document.body.classList.remove('modal-open'); }
 
         renderGrid();
     </script>
