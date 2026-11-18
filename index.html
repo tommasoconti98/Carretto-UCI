@@ -167,7 +167,6 @@
         </div>
     </div>
 
-    <!-- Modificato da Griglia Singola a Sezioni -->
     <div id="product-sections"></div>
 
     <div class="footer-actions" id="footer-controls">
@@ -229,16 +228,36 @@
 
     <script>
         const defaultProdotti = [
-            {nome:"Pop Corn Salati", prezzo:5.60, categoria:"Salato"}, {nome:"Pop Corn Dolci", prezzo:6.60, categoria:"Dolce"},
-            {nome:"Coca/Fanta/Tè (PET)", prezzo:4.00, categoria:"Bevande"}, {nome:"Acqua Nat 1L", prezzo:2.90, categoria:"Bevande"},
-            {nome:"Acqua Friz 0,7L", prezzo:2.60, categoria:"Bevande"}, {nome:"M&M'S (Arachidi / Cioccolato / Mini)", prezzo:4.90, categoria:"Dolce"},
-            {nome:"M&M'S Caramello Salato", prezzo:4.30, categoria:"Dolce"}, {nome:"Candy Cup", prezzo:8.00, categoria:"Dolce"},
-            {nome:"Chupa Chups", prezzo:1.20, categoria:"Dolce"}, {nome:"Pop Corn Cioccolato", prezzo:3.90, categoria:"Dolce"},
-            {nome:"Patatine Lays", prezzo:3.90, categoria:"Salato"}, {nome:"Nastro Azzurro", prezzo:4.00, categoria:"Bevande"},
-            {nome:"Mikado", prezzo:3.50, categoria:"Dolce"}, {nome:"Skittles", prezzo:4.10, categoria:"Dolce"},
-            {nome:"Salamini Beretta", prezzo:3.50, categoria:"Salato"}, {nome:"Barretta Chupa", prezzo:2.00, categoria:"Dolce"},
-            {nome:"Maltisers", prezzo:4.90, categoria:"Dolce"}, {nome:"Monster", prezzo:3.40, categoria:"Bevande"},
-			{nome:"Rose of Dolomities", prezzo:2.50, categoria:"Dolce"}, {nome:"Quadratini Loacker", prezzo:3.50, categoria:"Dolce"}
+            // Bevande
+            {nome:"Acqua Nat 1L", prezzo:2.90, categoria:"Bevande"},
+            {nome:"Acqua Friz 0,7L", prezzo:2.60, categoria:"Bevande"},
+            {nome:"Coca/Fanta/Tè (PET)", prezzo:4.00, categoria:"Bevande"},
+            {nome:"Monster", prezzo:3.40, categoria:"Bevande"},
+            {nome:"Lurisia", prezzo:3.40, categoria:"Bevande"},
+            {nome:"Pilsner", prezzo:4.40, categoria:"Bevande"},
+            {nome:"Nastro Azzurro", prezzo:4.00, categoria:"Bevande"},
+            {nome:"Bicchiere Free-Refill", prezzo:6.00, categoria:"Bevande"},
+            
+            // Salato
+            {nome:"Pop Corn Salati", prezzo:5.60, categoria:"Salato"},
+            {nome:"Patatine Lays", prezzo:3.90, categoria:"Salato"},
+            {nome:"Salamini Beretta", prezzo:3.50, categoria:"Salato"},
+            {nome:"Tuc Crisp", prezzo:3.50, categoria:"Salato"},
+            
+            // Dolce
+            {nome:"Pop Corn Dolci", prezzo:6.60, categoria:"Dolce"},
+            {nome:"Pop Corn Cioccolato", prezzo:3.90, categoria:"Dolce"},
+            {nome:"M&M'S (Arachidi / Cioccolato / Mini)", prezzo:4.90, categoria:"Dolce"},
+            {nome:"Maltisers", prezzo:4.90, categoria:"Dolce"},
+            {nome:"Skittles", prezzo:4.10, categoria:"Dolce"},
+            {nome:"Mikado", prezzo:3.50, categoria:"Dolce"},
+            {nome:"Milka Cookies", prezzo:3.50, categoria:"Dolce"},
+            {nome:"Candy Cup", prezzo:8.00, categoria:"Dolce"},
+            {nome:"Chupa Chups", prezzo:1.20, categoria:"Dolce"},
+            
+            // Menù
+            {nome:"Menù Medio Salato", prezzo:11.10, categoria:"Menù"},
+            {nome:"Menù Medio Dolce", prezzo:12.10, categoria:"Menù"}
         ];
 
         let prodotti = JSON.parse(localStorage.getItem('uci_listino_custom')) || defaultProdotti.map(p => ({...p}));
@@ -268,7 +287,6 @@
                 grid.className = 'grid';
                 
                 prodotti.forEach((p, index) => {
-                    // Fallback a Salato se la categoria non esiste nei vecchi salvataggi del browser
                     const pCat = p.categoria || 'Salato';
                     if (pCat !== cat) return;
                     
