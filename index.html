@@ -32,21 +32,32 @@
 
         body.modal-open { overflow: hidden; position: fixed; width: 100%; }
 
-        /* --- FATHOM HAPTIC WORKAROUND (iOS 26.5+) --- */
+        /* --- FATHOM HAPTIC FIXES --- */
+        .haptic-wrapper {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            overflow: hidden; /* Contiene solo lo switch gigante */
+            border-radius: inherit;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
         .haptic-layer {
             position: absolute;
             top: 50%; left: 50%;
-            transform: translate(-50%, -50%) scale(10); /* Scala lo switch per coprire qualsiasi tasto */
-            opacity: 0.001; /* Trasparente ma intercettabile fisicamente dal tocco */
-            z-index: 10;
+            transform: translate(-50%, -50%) scale(10);
+            opacity: 0.001;
             margin: 0; padding: 0;
             cursor: pointer;
+            pointer-events: auto;
+            touch-action: pan-y; /* FIX SCROLLING: Permette lo scorrimento verticale ignorando lo switch */
         }
         
-        /* Assicura che i layer aptici non escano dai bordi dei pulsanti */
-        .product-btn, .btn-circle, .btn-close, .pay-btn, .taglio-btn, .action-btn, .btn-delete, .add-btn {
+        .haptic-content { position: relative; z-index: 2; pointer-events: none; }
+
+        /* Elementi base (rimosso overflow: hidden per evitare il taglio della X) */
+        .product-btn, .btn-circle, .btn-close, .pay-btn, .taglio-btn, .action-btn, .btn-delete, .add-btn, .clear-icon {
             position: relative;
-            overflow: hidden;
         }
 
         /* --- HEADER PRINCIPALE --- */
@@ -82,7 +93,7 @@
         .p-price { font-size: 14px; color: var(--accent); font-weight: 500; }
 
         /* --- MODALITÀ EDIT --- */
-        .editable-text { border: 1px dashed white; border-radius: 4px; padding: 2px; display: inline-block; min-width: 40px; outline: none; }
+        .editable-text { border: 1px dashed white; border-radius: 4px; padding: 2px; display: inline-block; min-width: 40px; outline: none; pointer-events: auto; position: relative; z-index: 5; }
         .add-btn { background: transparent; border: 2px dashed #333; color: #333; font-size: 40px; display: flex; align-items: center; justify-content: center; border-radius: 16px; min-height: 100px; cursor: pointer; }
         
         .btn-delete {
@@ -91,7 +102,7 @@
             width: 26px; height: 26px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             font-size: 14px; font-weight: bold; border: 2px solid var(--bg);
-            z-index: 5;
+            z-index: 10; cursor: pointer;
         }
 
         .footer-actions { padding: 20px; display: flex; justify-content: center; gap: 15px; margin-bottom: 40px; background: var(--bg); }
@@ -142,7 +153,7 @@
 		
         .clear-icon { 
             color: var(--text-gray); font-size: 20px; padding: 5px 10px; cursor: pointer; 
-            position: relative; overflow: hidden; display: inline-block;
+            display: inline-block;
         }
 
         .resto-area { background: rgba(255, 69, 58, 0.15); padding: 20px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
@@ -163,13 +174,16 @@
         </div>
         <div class="header-btns">
             <button class="btn-circle" style="background: var(--red)" onclick="triggerHaptic(); clearCart()">
-                <input type="checkbox" switch class="haptic-layer">🗑
+                <div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div>
+                <span class="haptic-content">🗑</span>
             </button>
             <button class="btn-circle" style="background: var(--orange)" onclick="triggerHaptic(); toggleSheet('report-sheet', true)">
-                <input type="checkbox" switch class="haptic-layer">📊
+                <div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div>
+                <span class="haptic-content">📊</span>
             </button>
             <button class="btn-circle" style="background: #333" id="pay-btn-icon" onclick="triggerHaptic(); toggleSheet('pay-sheet', true)" disabled>
-                <input type="checkbox" switch class="haptic-layer">💳
+                <div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div>
+                <span class="haptic-content">💳</span>
             </button>
         </div>
     </div>
@@ -178,7 +192,8 @@
 
     <div class="footer-actions" id="footer-controls">
         <button class="action-btn btn-edit" onclick="triggerHaptic(); enterEditMode()">
-            <input type="checkbox" switch class="haptic-layer">EDIT
+            <div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div>
+            <span class="haptic-content">EDIT</span>
         </button>
     </div>
 
@@ -186,7 +201,8 @@
         <div class="sheet-header">
             <span class="sheet-title">Cassa</span>
             <button class="btn-close" onclick="triggerHaptic(); toggleSheet('pay-sheet', false)">
-                <input type="checkbox" switch class="haptic-layer">✕
+                <div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div>
+                <span class="haptic-content">✕</span>
             </button>
         </div>
         <div class="sheet-content">
@@ -194,26 +210,29 @@
             <div class="inset-group" id="order-summary"></div>
             <div class="section-header">Pagamento con Carta</div>
             <button class="pay-btn btn-blue" onclick="triggerHaptic(); confirmPayment('carta')">
-                <input type="checkbox" switch class="haptic-layer">PAGATO CON CARTA
+                <div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div>
+                <span class="haptic-content">PAGATO CON CARTA</span>
             </button>
             <div class="section-header">Pagamento in Contanti</div>
             <div class="quick-cash">
-                <button class="taglio-btn" onclick="triggerHaptic(); quickCash(2)"><input type="checkbox" switch class="haptic-layer">€2</button>
-                <button class="taglio-btn" onclick="triggerHaptic(); quickCash(5)"><input type="checkbox" switch class="haptic-layer">€5</button>
-                <button class="taglio-btn" onclick="triggerHaptic(); quickCash(10)"><input type="checkbox" switch class="haptic-layer">€10</button>
-                <button class="taglio-btn" onclick="triggerHaptic(); quickCash(20)"><input type="checkbox" switch class="haptic-layer">€20</button>
-                <button class="taglio-btn" onclick="triggerHaptic(); quickCash(50)"><input type="checkbox" switch class="haptic-layer">€50</button>
+                <button class="taglio-btn" onclick="triggerHaptic(); quickCash(2)"><div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div><span class="haptic-content">€2</span></button>
+                <button class="taglio-btn" onclick="triggerHaptic(); quickCash(5)"><div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div><span class="haptic-content">€5</span></button>
+                <button class="taglio-btn" onclick="triggerHaptic(); quickCash(10)"><div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div><span class="haptic-content">€10</span></button>
+                <button class="taglio-btn" onclick="triggerHaptic(); quickCash(20)"><div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div><span class="haptic-content">€20</span></button>
+                <button class="taglio-btn" onclick="triggerHaptic(); quickCash(50)"><div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div><span class="haptic-content">€50</span></button>
             </div>
             <div class="input-group">
                 <input type="text" inputmode="decimal" id="cash-received" placeholder="Importo ricevuto" oninput="checkCash()">
                 <span class="clear-icon" onclick="triggerHaptic(); clearInput()">
-                    <input type="checkbox" switch class="haptic-layer">✕
+                    <div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div>
+                    <span class="haptic-content">✕</span>
                 </span>
             </div>
             <div id="resto-container" style="display: none;">
                 <div class="resto-area"><span class="resto-label">RESTO:</span><span id="resto-value" class="resto-value">€ 0,00</span></div>
                 <button class="pay-btn btn-green" onclick="triggerHaptic(); confirmPayment('contanti')">
-                    <input type="checkbox" switch class="haptic-layer">CONFERMA E CHIUDI
+                    <div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div>
+                    <span class="haptic-content">CONFERMA E CHIUDI</span>
                 </button>
             </div>
         </div>
@@ -223,7 +242,8 @@
         <div class="sheet-header">
             <span class="sheet-title">Report</span>
             <button class="btn-close" onclick="triggerHaptic(); toggleSheet('report-sheet', false)">
-                <input type="checkbox" switch class="haptic-layer">✕
+                <div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div>
+                <span class="haptic-content">✕</span>
             </button>
         </div>
         <div class="sheet-content">
@@ -237,7 +257,8 @@
             <div class="inset-group" id="report-products"></div>
             
             <button class="pay-btn btn-red" onclick="triggerHaptic(); resetReport()">
-                <input type="checkbox" switch class="haptic-layer">AZZERA REPORT GIORNALIERO
+                <div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div>
+                <span class="haptic-content">AZZERA REPORT GIORNALIERO</span>
             </button>
 
             <div class="credits">
@@ -272,7 +293,7 @@
         let stats = JSON.parse(localStorage.getItem('uci_v8_stats')) || { carta: 0, contanti: 0, vendite: {} };
         let isEditMode = false;
 
-        // Mantieni la vibrazione nativa per i dispositivi Android
+        // Vibrazione nativa per i dispositivi Android
         function triggerHaptic() {
             if (navigator.vibrate) navigator.vibrate(15);
         }
@@ -300,22 +321,21 @@
                     itemContainer.className = 'product-btn';
                     
                     if (isEditMode) {
-                        // In edit mode l'overlay copre solo la X per permettere la digitazione sul testo
                         itemContainer.innerHTML = `
                             <div class="btn-delete" onclick="triggerHaptic(); deleteProduct(${index})">
-                                <input type="checkbox" switch class="haptic-layer">✕
+                                <div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div>
+                                <span class="haptic-content">✕</span>
                             </div>
                             <span class="p-name editable-text" contenteditable="true" onblur="updateProdData(${index}, 'nome', this.innerText)">${p.nome}</span>
                             <span class="p-price editable-text" contenteditable="true" onblur="updateProdData(${index}, 'prezzo', this.innerText)">${p.prezzo.toFixed(2).replace('.',',')}</span>
                         `;
                     } else {
-                        // In modalità cassa, l'overlay aptico copre l'intero tasto prodotto
                         const btn = document.createElement('button');
                         btn.className = 'product-btn';
                         btn.innerHTML = `
-                            <input type="checkbox" switch class="haptic-layer">
-                            <span class="p-name">${p.nome}</span>
-                            <span class="p-price">€ ${p.prezzo.toFixed(2).replace('.',',')}</span>
+                            <div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div>
+                            <span class="p-name haptic-content">${p.nome}</span>
+                            <span class="p-price haptic-content">€ ${p.prezzo.toFixed(2).replace('.',',')}</span>
                         `;
                         btn.onclick = () => { triggerHaptic(); carrello.push(p); updateUI(); };
                         grid.appendChild(btn);
@@ -327,7 +347,10 @@
                 if (isEditMode) {
                     const addBtn = document.createElement('div');
                     addBtn.className = 'add-btn';
-                    addBtn.innerHTML = '<input type="checkbox" switch class="haptic-layer">+';
+                    addBtn.innerHTML = `
+                        <div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div>
+                        <span class="haptic-content">+</span>
+                    `;
                     addBtn.onclick = () => { triggerHaptic(); addNewProduct(cat); };
                     grid.appendChild(addBtn);
                 }
@@ -359,10 +382,12 @@
             renderGrid();
             document.getElementById('footer-controls').innerHTML = `
                 <button class="action-btn btn-reset" onclick="triggerHaptic(); resetListino()">
-                    <input type="checkbox" switch class="haptic-layer">RESET
+                    <div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div>
+                    <span class="haptic-content">RESET</span>
                 </button>
                 <button class="action-btn btn-save" onclick="triggerHaptic(); saveListino()">
-                    <input type="checkbox" switch class="haptic-layer">SALVA
+                    <div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div>
+                    <span class="haptic-content">SALVA</span>
                 </button>
             `;
         }
@@ -373,7 +398,8 @@
             renderGrid();
             document.getElementById('footer-controls').innerHTML = `
                 <button class="action-btn btn-edit" onclick="triggerHaptic(); enterEditMode()">
-                    <input type="checkbox" switch class="haptic-layer">EDIT
+                    <div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div>
+                    <span class="haptic-content">EDIT</span>
                 </button>
             `;
         }
@@ -396,7 +422,6 @@
             payBtn.disabled = carrello.length === 0;
             payBtn.style.background = carrello.length > 0 ? 'var(--green)' : '#333';
             
-            // Disattiva il trucco aptico se il pulsante del carrello è vuoto (previene la vibrazione a vuoto)
             if (hapticInput) hapticInput.disabled = carrello.length === 0;
         }
 
