@@ -32,34 +32,6 @@
 
         body.modal-open { overflow: hidden; position: fixed; width: 100%; }
 
-        /* --- FATHOM HAPTIC FIXES --- */
-        .haptic-wrapper {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            overflow: hidden; /* Contiene solo lo switch gigante */
-            border-radius: inherit;
-            pointer-events: none;
-            z-index: 1;
-        }
-        
-        .haptic-layer {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%) scale(10);
-            opacity: 0.001;
-            margin: 0; padding: 0;
-            cursor: pointer;
-            pointer-events: auto;
-            touch-action: pan-y; /* FIX SCROLLING: Permette lo scorrimento verticale ignorando lo switch */
-        }
-        
-        .haptic-content { position: relative; z-index: 2; pointer-events: none; }
-
-        /* Elementi base (rimosso overflow: hidden per evitare il taglio della X) */
-        .product-btn, .btn-circle, .btn-close, .pay-btn, .taglio-btn, .action-btn, .btn-delete, .add-btn, .clear-icon {
-            position: relative;
-        }
-
         /* --- HEADER PRINCIPALE --- */
         .header { 
             display: flex; align-items: center; justify-content: space-between; 
@@ -85,7 +57,7 @@
         .product-btn { 
             background: var(--card); border: none; border-radius: 16px; padding: 18px 10px;
             color: white; text-align: center; display: flex; flex-direction: column;
-            justify-content: center; min-height: 100px;
+            justify-content: center; min-height: 100px; position: relative;
             word-break: break-word;
         }
         .product-btn:active { background: #2C2C2E; }
@@ -93,7 +65,7 @@
         .p-price { font-size: 14px; color: var(--accent); font-weight: 500; }
 
         /* --- MODALITÀ EDIT --- */
-        .editable-text { border: 1px dashed white; border-radius: 4px; padding: 2px; display: inline-block; min-width: 40px; outline: none; pointer-events: auto; position: relative; z-index: 5; }
+        .editable-text { border: 1px dashed white; border-radius: 4px; padding: 2px; display: inline-block; min-width: 40px; outline: none; }
         .add-btn { background: transparent; border: 2px dashed #333; color: #333; font-size: 40px; display: flex; align-items: center; justify-content: center; border-radius: 16px; min-height: 100px; cursor: pointer; }
         
         .btn-delete {
@@ -102,7 +74,7 @@
             width: 26px; height: 26px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             font-size: 14px; font-weight: bold; border: 2px solid var(--bg);
-            z-index: 10; cursor: pointer;
+            z-index: 5;
         }
 
         .footer-actions { padding: 20px; display: flex; justify-content: center; gap: 15px; margin-bottom: 40px; background: var(--bg); }
@@ -150,22 +122,38 @@
 
         .input-group { background: var(--card); border-radius: 16px; display: flex; align-items: center; padding: 6px 16px; margin-bottom: 20px; }
         input { background: transparent; border: none; color: white; padding: 12px 0; font-size: 22px; width: 100%; outline: none; }
-		
-        .clear-icon { 
-            color: var(--text-gray); font-size: 20px; padding: 5px 10px; cursor: pointer; 
-            display: inline-block;
-        }
+		.clear-icon { color: var(--text-gray); font-size: 20px; padding: 5px; cursor: pointer; }
 
         .resto-area { background: rgba(255, 69, 58, 0.15); padding: 20px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .resto-label { color: var(--red); font-size: 17px; font-weight: 700; }
         .resto-value { color: var(--red); font-size: 22px; font-weight: 700; }
 
         /* --- SEZIONE CREDITS --- */
-        .credits { text-align: center; margin-top: 50px; padding-bottom: 30px; color: var(--text-gray); font-size: 13px; line-height: 1.6; background: var(--bg); }
-        .credits a { color: var(--accent); text-decoration: none; display: block; margin-top: 4px; }
+        .credits {
+            text-align: center;
+            margin-top: 50px;
+            padding-bottom: 30px;
+            color: var(--text-gray);
+            font-size: 13px;
+            line-height: 1.6;
+            background: var(--bg);
+        }
+        .credits a {
+            color: var(--accent);
+            text-decoration: none;
+            display: block;
+            margin-top: 4px;
+        }
+
+        #haptic-trigger { position: absolute; opacity: 0; pointer-events: none; visibility: hidden; }
     </style>
 </head>
 <body>
+
+    <div id="haptic-trigger">
+        <input type="checkbox" id="haptic-switch" switch>
+        <label for="haptic-switch" id="haptic-label"></label>
+    </div>
 
     <div class="header">
         <div class="total-box">
@@ -173,67 +161,43 @@
             <div id="main-total" class="total-amount">€ 0,00</div>
         </div>
         <div class="header-btns">
-            <button class="btn-circle" style="background: var(--red)" onclick="triggerHaptic(); clearCart()">
-                <div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div>
-                <span class="haptic-content">🗑</span>
-            </button>
-            <button class="btn-circle" style="background: var(--orange)" onclick="triggerHaptic(); toggleSheet('report-sheet', true)">
-                <div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div>
-                <span class="haptic-content">📊</span>
-            </button>
-            <button class="btn-circle" style="background: #333" id="pay-btn-icon" onclick="triggerHaptic(); toggleSheet('pay-sheet', true)" disabled>
-                <div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div>
-                <span class="haptic-content">💳</span>
-            </button>
+            <button class="btn-circle" style="background: var(--red)" onclick="triggerHaptic(); clearCart()">🗑</button>
+            <button class="btn-circle" style="background: var(--orange)" onclick="triggerHaptic(); toggleSheet('report-sheet', true)">📊</button>
+            <button class="btn-circle" style="background: #333" id="pay-btn-icon" onclick="triggerHaptic(); toggleSheet('pay-sheet', true)" disabled>💳</button>
         </div>
     </div>
 
     <div id="product-sections"></div>
 
     <div class="footer-actions" id="footer-controls">
-        <button class="action-btn btn-edit" onclick="triggerHaptic(); enterEditMode()">
-            <div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div>
-            <span class="haptic-content">EDIT</span>
-        </button>
+        <button class="action-btn btn-edit" onclick="triggerHaptic(); enterEditMode()">EDIT</button>
     </div>
 
     <div id="pay-sheet" class="sheet">
         <div class="sheet-header">
             <span class="sheet-title">Cassa</span>
-            <button class="btn-close" onclick="triggerHaptic(); toggleSheet('pay-sheet', false)">
-                <div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div>
-                <span class="haptic-content">✕</span>
-            </button>
+            <button class="btn-close" onclick="triggerHaptic(); toggleSheet('pay-sheet', false)">✕</button>
         </div>
         <div class="sheet-content">
             <div class="section-header">Riepilogo Ordine</div>
             <div class="inset-group" id="order-summary"></div>
             <div class="section-header">Pagamento con Carta</div>
-            <button class="pay-btn btn-blue" onclick="triggerHaptic(); confirmPayment('carta')">
-                <div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div>
-                <span class="haptic-content">PAGATO CON CARTA</span>
-            </button>
+            <button class="pay-btn btn-blue" onclick="triggerHaptic(); confirmPayment('carta')">PAGATO CON CARTA</button>
             <div class="section-header">Pagamento in Contanti</div>
             <div class="quick-cash">
-                <button class="taglio-btn" onclick="triggerHaptic(); quickCash(2)"><div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div><span class="haptic-content">€2</span></button>
-                <button class="taglio-btn" onclick="triggerHaptic(); quickCash(5)"><div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div><span class="haptic-content">€5</span></button>
-                <button class="taglio-btn" onclick="triggerHaptic(); quickCash(10)"><div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div><span class="haptic-content">€10</span></button>
-                <button class="taglio-btn" onclick="triggerHaptic(); quickCash(20)"><div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div><span class="haptic-content">€20</span></button>
-                <button class="taglio-btn" onclick="triggerHaptic(); quickCash(50)"><div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div><span class="haptic-content">€50</span></button>
+                <button class="taglio-btn" onclick="quickCash(2)">€2</button>
+                <button class="taglio-btn" onclick="quickCash(5)">€5</button>
+                <button class="taglio-btn" onclick="quickCash(10)">€10</button>
+                <button class="taglio-btn" onclick="quickCash(20)">€20</button>
+                <button class="taglio-btn" onclick="quickCash(50)">€50</button>
             </div>
             <div class="input-group">
                 <input type="text" inputmode="decimal" id="cash-received" placeholder="Importo ricevuto" oninput="checkCash()">
-                <span class="clear-icon" onclick="triggerHaptic(); clearInput()">
-                    <div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div>
-                    <span class="haptic-content">✕</span>
-                </span>
+                <span class="clear-icon" onclick="triggerHaptic(); clearInput()">✕</span>
             </div>
             <div id="resto-container" style="display: none;">
                 <div class="resto-area"><span class="resto-label">RESTO:</span><span id="resto-value" class="resto-value">€ 0,00</span></div>
-                <button class="pay-btn btn-green" onclick="triggerHaptic(); confirmPayment('contanti')">
-                    <div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div>
-                    <span class="haptic-content">CONFERMA E CHIUDI</span>
-                </button>
+                <button class="pay-btn btn-green" onclick="triggerHaptic(); confirmPayment('contanti')">CONFERMA E CHIUDI</button>
             </div>
         </div>
     </div>
@@ -241,10 +205,7 @@
     <div id="report-sheet" class="sheet">
         <div class="sheet-header">
             <span class="sheet-title">Report</span>
-            <button class="btn-close" onclick="triggerHaptic(); toggleSheet('report-sheet', false)">
-                <div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div>
-                <span class="haptic-content">✕</span>
-            </button>
+            <button class="btn-close" onclick="triggerHaptic(); toggleSheet('report-sheet', false)">✕</button>
         </div>
         <div class="sheet-content">
             <div class="section-header">Incassi</div>
@@ -256,10 +217,7 @@
             <div class="section-header">Prodotti Venduti</div>
             <div class="inset-group" id="report-products"></div>
             
-            <button class="pay-btn btn-red" onclick="triggerHaptic(); resetReport()">
-                <div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div>
-                <span class="haptic-content">AZZERA REPORT GIORNALIERO</span>
-            </button>
+            <button class="pay-btn btn-red" onclick="triggerHaptic(); resetReport()">AZZERA REPORT GIORNALIERO</button>
 
             <div class="credits">
                 Credits Tommaso Conti
@@ -271,21 +229,35 @@
     <script>
         const defaultProdotti = [
             // Bevande
-            {nome:"Acqua Nat 1L", prezzo:2.90, categoria:"Bevande"}, {nome:"Acqua Friz 0,7L", prezzo:2.60, categoria:"Bevande"},
-            {nome:"Coca/Fanta/Tè (PET)", prezzo:4.00, categoria:"Bevande"}, {nome:"Monster", prezzo:3.40, categoria:"Bevande"},
-            {nome:"Lurisia", prezzo:3.40, categoria:"Bevande"}, {nome:"Pilsner", prezzo:4.40, categoria:"Bevande"},
-            {nome:"Nastro Azzurro", prezzo:4.00, categoria:"Bevande"}, {nome:"Bicchiere Free-Refill", prezzo:6.00, categoria:"Bevande"},
+            {nome:"Acqua Nat 1L", prezzo:2.90, categoria:"Bevande"},
+            {nome:"Acqua Friz 0,7L", prezzo:2.60, categoria:"Bevande"},
+            {nome:"Coca/Fanta/Tè (PET)", prezzo:4.00, categoria:"Bevande"},
+            {nome:"Monster", prezzo:3.40, categoria:"Bevande"},
+            {nome:"Lurisia", prezzo:3.40, categoria:"Bevande"},
+            {nome:"Pilsner", prezzo:4.40, categoria:"Bevande"},
+            {nome:"Nastro Azzurro", prezzo:4.00, categoria:"Bevande"},
+            {nome:"Bicchiere Free-Refill", prezzo:6.00, categoria:"Bevande"},
+            
             // Salato
-            {nome:"Pop Corn Salati", prezzo:5.60, categoria:"Salato"}, {nome:"Patatine Lays", prezzo:3.90, categoria:"Salato"},
-            {nome:"Salamini Beretta", prezzo:3.50, categoria:"Salato"}, {nome:"Tuc Crisp", prezzo:3.50, categoria:"Salato"},
+            {nome:"Pop Corn Salati", prezzo:5.60, categoria:"Salato"},
+            {nome:"Patatine Lays", prezzo:3.90, categoria:"Salato"},
+            {nome:"Salamini Beretta", prezzo:3.50, categoria:"Salato"},
+            {nome:"Tuc Crisp", prezzo:3.50, categoria:"Salato"},
+            
             // Dolce
-            {nome:"Pop Corn Dolci", prezzo:6.60, categoria:"Dolce"}, {nome:"Pop Corn Cioccolato", prezzo:3.90, categoria:"Dolce"},
-            {nome:"M&M'S (Arachidi / Cioccolato / Mini)", prezzo:4.90, categoria:"Dolce"}, {nome:"Maltisers", prezzo:4.90, categoria:"Dolce"},
-            {nome:"Skittles", prezzo:4.10, categoria:"Dolce"}, {nome:"Mikado", prezzo:3.50, categoria:"Dolce"},
-            {nome:"Milka Cookies", prezzo:3.50, categoria:"Dolce"}, {nome:"Candy Cup", prezzo:8.00, categoria:"Dolce"},
+            {nome:"Pop Corn Dolci", prezzo:6.60, categoria:"Dolce"},
+            {nome:"Pop Corn Cioccolato", prezzo:3.90, categoria:"Dolce"},
+            {nome:"M&M'S (Arachidi / Cioccolato / Mini)", prezzo:4.90, categoria:"Dolce"},
+            {nome:"Maltisers", prezzo:4.90, categoria:"Dolce"},
+            {nome:"Skittles", prezzo:4.10, categoria:"Dolce"},
+            {nome:"Mikado", prezzo:3.50, categoria:"Dolce"},
+            {nome:"Milka Cookies", prezzo:3.50, categoria:"Dolce"},
+            {nome:"Candy Cup", prezzo:8.00, categoria:"Dolce"},
             {nome:"Chupa Chups", prezzo:1.20, categoria:"Dolce"},
+            
             // Menù
-            {nome:"Menù Medio Salato", prezzo:11.10, categoria:"Menù"}, {nome:"Menù Medio Dolce", prezzo:12.10, categoria:"Menù"}
+            {nome:"Menù Medio Salato", prezzo:11.10, categoria:"Menù"},
+            {nome:"Menù Medio Dolce", prezzo:12.10, categoria:"Menù"}
         ];
 
         let prodotti = JSON.parse(localStorage.getItem('uci_listino_custom')) || defaultProdotti.map(p => ({...p}));
@@ -293,9 +265,10 @@
         let stats = JSON.parse(localStorage.getItem('uci_v8_stats')) || { carta: 0, contanti: 0, vendite: {} };
         let isEditMode = false;
 
-        // Vibrazione nativa per i dispositivi Android
         function triggerHaptic() {
             if (navigator.vibrate) navigator.vibrate(15);
+            const hapticLabel = document.getElementById('haptic-label');
+            if (hapticLabel) hapticLabel.click();
         }
 
         function renderGrid() {
@@ -322,21 +295,14 @@
                     
                     if (isEditMode) {
                         itemContainer.innerHTML = `
-                            <div class="btn-delete" onclick="triggerHaptic(); deleteProduct(${index})">
-                                <div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div>
-                                <span class="haptic-content">✕</span>
-                            </div>
+                            <div class="btn-delete" onclick="triggerHaptic(); deleteProduct(${index})">✕</div>
                             <span class="p-name editable-text" contenteditable="true" onblur="updateProdData(${index}, 'nome', this.innerText)">${p.nome}</span>
                             <span class="p-price editable-text" contenteditable="true" onblur="updateProdData(${index}, 'prezzo', this.innerText)">${p.prezzo.toFixed(2).replace('.',',')}</span>
                         `;
                     } else {
                         const btn = document.createElement('button');
                         btn.className = 'product-btn';
-                        btn.innerHTML = `
-                            <div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div>
-                            <span class="p-name haptic-content">${p.nome}</span>
-                            <span class="p-price haptic-content">€ ${p.prezzo.toFixed(2).replace('.',',')}</span>
-                        `;
+                        btn.innerHTML = `<span class="p-name">${p.nome}</span><span class="p-price">€ ${p.prezzo.toFixed(2).replace('.',',')}</span>`;
                         btn.onclick = () => { triggerHaptic(); carrello.push(p); updateUI(); };
                         grid.appendChild(btn);
                         return;
@@ -347,10 +313,7 @@
                 if (isEditMode) {
                     const addBtn = document.createElement('div');
                     addBtn.className = 'add-btn';
-                    addBtn.innerHTML = `
-                        <div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div>
-                        <span class="haptic-content">+</span>
-                    `;
+                    addBtn.innerHTML = '+';
                     addBtn.onclick = () => { triggerHaptic(); addNewProduct(cat); };
                     grid.appendChild(addBtn);
                 }
@@ -381,14 +344,8 @@
             isEditMode = true;
             renderGrid();
             document.getElementById('footer-controls').innerHTML = `
-                <button class="action-btn btn-reset" onclick="triggerHaptic(); resetListino()">
-                    <div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div>
-                    <span class="haptic-content">RESET</span>
-                </button>
-                <button class="action-btn btn-save" onclick="triggerHaptic(); saveListino()">
-                    <div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div>
-                    <span class="haptic-content">SALVA</span>
-                </button>
+                <button class="action-btn btn-reset" onclick="triggerHaptic(); resetListino()">RESET</button>
+                <button class="action-btn btn-save" onclick="triggerHaptic(); saveListino()">SALVA</button>
             `;
         }
 
@@ -397,10 +354,7 @@
             isEditMode = false;
             renderGrid();
             document.getElementById('footer-controls').innerHTML = `
-                <button class="action-btn btn-edit" onclick="triggerHaptic(); enterEditMode()">
-                    <div class="haptic-wrapper"><input type="checkbox" switch class="haptic-layer"></div>
-                    <span class="haptic-content">EDIT</span>
-                </button>
+                <button class="action-btn btn-edit" onclick="triggerHaptic(); enterEditMode()">EDIT</button>
             `;
         }
 
@@ -415,14 +369,9 @@
         function updateUI() {
             const totale = carrello.reduce((acc, p) => acc + p.prezzo, 0);
             document.getElementById('main-total').innerText = `€ ${totale.toFixed(2).replace('.',',')}`;
-            
             const payBtn = document.getElementById('pay-btn-icon');
-            const hapticInput = payBtn.querySelector('.haptic-layer');
-            
             payBtn.disabled = carrello.length === 0;
             payBtn.style.background = carrello.length > 0 ? 'var(--green)' : '#333';
-            
-            if (hapticInput) hapticInput.disabled = carrello.length === 0;
         }
 
         function clearCart() { carrello = []; updateUI(); }
